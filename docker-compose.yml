@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mdp
+      MYSQL_DATABASE: products_db
+      MYSQL_USER: api_entrypoint
+      MYSQL_PASSWORD: abracadabra
+    ports:
+      - "3306:3306"  # Expose le port 3306 pour les connexions MySQL
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: java_app
+    depends_on:
+      - mysql  # Assure que MySQL démarre avant l'application Java
+    ports:
+      - "8080:8080"  # Expose le port 8080 pour une API GET/POST future
+    volumes:
+      - app_data:/usr/src/app  # Volume pour l'application Java
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: products_db
+      MYSQL_USER: api_entrypoint
+      MYSQL_PASSWORD: abracadabra
+
+volumes:
+  mysql_data:
+  app_data:
