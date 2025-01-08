@@ -1,9 +1,19 @@
 package connexion;
-import java.sql.*;
 
-public class conn {
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class Connect {
+
 	public static void main(String[] args) {
-        String url = "jdbc:mysql://localhost:3306/products_db";
+		// TODO Auto-generated method stub
+		System.out.println("bonjour");
+
+		
+		String url = "jdbc:mysql://localhost:3306/products_db";
         String user = "root";
         String mdp = "mdp";
 
@@ -30,4 +40,5 @@ public class conn {
             e.printStackTrace();
         }
     }
+
 }
