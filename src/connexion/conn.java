@@ -1,7 +1,7 @@
 package connexion;
 import java.sql.*;
 
-public class con {
+public class conn {
 	public static void main(String[] args) {
         String url = "jdbc:mysql://localhost:3306/products_db";
         String user = "root";
