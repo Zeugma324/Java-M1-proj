@@ -7,6 +7,7 @@ public class Produits {
     static String user = "sql7756463";
     static String mdp = "iFgwWVZFHW";
 
+    //US 0.1 Je veux visualiser les détails d'un produit : prix unitaire, prix au kg, nutriscore, libellé article, poids, condionnement, ...
     public static void visualiser ( int idProd){
         String libelle = "";
         String main_category = "";
@@ -18,15 +19,6 @@ public class Produits {
         int discount_percentage;
 
         String where = "WHERE id_produit = " + idProd;
-        String query_libelle = "SELECT name FROM produit ";
-        String query_main_category = "SELECT main_category FROM produit JOIN categories ON produit.category = categories.Id_cat";
-
-        String query_sub_category = "SELECT sub_category FROM produit JOIN categories ON produit.category = categories.Id_cat";
-        String query_rating = "SELECT ratings FROM produit ";
-        String query_nb_reviews = "SELECT no_of_ratings FROM produit ";
-        String query_discounted_price = "SELECT discount_price FROM produit ";
-        String query_actual_price = "SELECT actual_price FROM produit ";
-        String query_discount_percentage = "SELECT discount_percentage FROM produit ";
 
         String query_all = "SELECT * FROM produit JOIN categories ON produit.category = categories.Id_cat";
 
@@ -66,7 +58,33 @@ public class Produits {
 
 
     }
+
+    //US 0.4 Je veux trier une liste de produits
+    public static void trierProduits(int idCat){
+        String where = "WHERE category = " + idCat;
+        String query = "SELECT name FROM produit JOIN categories ON produit.category = categories.Id_cat";
+
+        try (Connection con = DriverManager.getConnection(url, user, mdp);
+            Statement stm = con.createStatement();)
+        {
+            ResultSet res_all = stm.executeQuery(query + " " + where);
+            int count = 1;
+            while (res_all.next()) {
+                System.out.print(count + ". ");
+                System.out.println(res_all.getString("name"));
+                count++;
+            }
+
+        }catch (SQLException e) {
+            System.out.println("Requete/Syntaxe incorrect");
+            e.printStackTrace();
+        }
+    }
     public static void main(String[] args) {
-        visualiser(3);
+        // exemple de utilisation de US 0.1
+//        visualiser(3);
+
+        // exemple de utilisation de US 0.4
+        trierProduits(3);
     }
 }
