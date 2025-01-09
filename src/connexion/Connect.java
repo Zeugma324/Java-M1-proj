@@ -9,15 +9,11 @@ import java.sql.Statement;
 public class Connect {
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		System.out.println("bonjour");
+		String url = "jdbc:mysql://sql7.freesqldatabase.com/sql7756463";
+        String user = "sql7756463";
+        String mdp = "iFgwWVZFHW";
 
-		
-		String url = "jdbc:mysql://localhost:3306/products_db";
-        String user = "root";
-        String mdp = "mdp";
-
-        String query = "SELECT Count(BrandName), BrandName FROM Message_Group GROUP BY BrandName";
+        String query = "SELECT DISTINCT main_category FROM Produits";
 
         try (Connection con = DriverManager.getConnection(url, user, mdp);
         	 Statement stm = con.createStatement();)
