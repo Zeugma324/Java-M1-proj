@@ -11,7 +11,7 @@ public class Produits {
     static String mdp = "iFgwWVZFHW";
 
     // US 0.1 Visualiser les détails d'un produit
-    public static void visualiser(int idProd) throws SQLException {
+    public static void visualiser(int idProd) {
         String libelle = "";
         String main_category = "";
         String sub_category = "";
@@ -22,7 +22,7 @@ public class Produits {
         int discount_percentage;
 
         String where = "WHERE id_produit = " + idProd;
-        String query_all = "SELECT * FROM produit JOIN categories ON produit.category = categories.Id_cat ";
+        String query_all = "SELECT * FROM produit JOIN categories ON produit.category = categories.Id_cat";
 
         try (Connection con = DriverManager.getConnection(url, user, mdp);
              Statement stm = con.createStatement()) {
@@ -63,7 +63,7 @@ public class Produits {
     // US 0.4 Trier une liste de produits
     public static void trierProduits(int idCat, String trier_par, String trier_ord) {
         String where = "WHERE category = " + idCat;
-        String query = "SELECT name FROM produit JOIN categories ON produit.category = categories.Id_cat ";
+        String query = "SELECT name FROM produit JOIN categories ON produit.category = categories.Id_cat";
         String trier = "ORDER BY " + trier_par + " " + trier_ord;
 
         try (Connection con = DriverManager.getConnection(url, user, mdp);
@@ -94,43 +94,38 @@ public class Produits {
         panel.add(comboBox);
 
         // Ordres de tri
-        String[] ordre = {"descending", "ascending"};
+        String[] ordre = {"descending","ascending"};
         JComboBox<String> comboBox2 = new JComboBox<>(ordre);
         panel.add(new JLabel("Ordre :"));
         panel.add(comboBox2);
-        String trier = "";
-        String order = "";
+
         int result = JOptionPane.showConfirmDialog(null, panel, "Comment trier ?", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
-            trier = comboBox.getSelectedItem().toString();
-            order = comboBox2.getSelectedItem().toString();
+            String trier = comboBox.getSelectedItem().toString();
+            String order = comboBox2.getSelectedItem().toString();
+
+            String trier_par = switch (trier) {
+                case "libelle" -> "name";
+                case "rating" -> "ratings";
+                case "price" -> "discount_price";
+                default -> "ratings";
+            };
+
+            String trier_ord = switch (order) {
+                case "ascending" -> "ASC";
+                case "descending" -> "DESC";
+                default -> "";
+            };
+
+            trierProduits(idCat, trier_par, trier_ord);
         }
-        String trier_par = switch(trier){
-            case "libelle" -> "name";
-            case "rating" -> "ratings";
-            case "price" -> "discount_price";
-            default -> "";
-        };
-        String trier_ord = switch (order){
-            case "ascending" -> "ASC";
-            case "descending" -> "DESC";
-            default -> "";
-        };
-
-
-        trierProduits(idCat, trier_par, trier_ord);
     }
 
     public static void main(String[] args) {
-        try {
-            // Exemple d'utilisation de US 0.1
-            visualiser(3);
+        // Exemple d'utilisation de US 0.1
+        visualiser(3);
 
-            // Exemple d'utilisation de US 0.4
-            trier(1);
-        } catch (SQLException e) {
-            System.out.println("Erreur SQL détectée.");
-            e.printStackTrace();
-        }
+        // Exemple d'utilisation de US 0.4
+        trier(1);
     }
 }
