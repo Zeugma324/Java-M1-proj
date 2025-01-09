@@ -23,7 +23,7 @@ public class Produits {
         String query_all = "SELECT * FROM produit JOIN categories ON produit.category = categories.Id_cat";
 
         try (Connection con = DriverManager.getConnection(url, user, mdp);
-             Statement stm = con.createStatement();)
+             Statement stm = con.createStatement())
         {
 
             ResultSet res_all = stm.executeQuery(query_all + " " + where);
@@ -65,7 +65,7 @@ public class Produits {
         String query = "SELECT name FROM produit JOIN categories ON produit.category = categories.Id_cat";
 
         try (Connection con = DriverManager.getConnection(url, user, mdp);
-            Statement stm = con.createStatement();)
+            Statement stm = con.createStatement())
         {
             ResultSet res_all = stm.executeQuery(query + " " + where);
             int count = 1;
@@ -85,6 +85,6 @@ public class Produits {
 //        visualiser(3);
 
         // exemple de utilisation de US 0.4
-        trierProduits(3);
+        trierProduits(1);
     }
 }
