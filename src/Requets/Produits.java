@@ -3,7 +3,7 @@ package Requets;
 import java.sql.*;
 
 public class Produits {
-    static String url = "sql7.freesqldatabase.com";
+    static String url = "jdbc:mysql://sql7.freesqldatabase.com:3306/sql7756463";
     static String user = "sql7756463";
     static String mdp = "iFgwWVZFHW";
 
@@ -17,14 +17,14 @@ public class Produits {
         int actual_price = 0;
         int discount_percentage;
 
-        String where = "WHERE idProd = " + idProd;
+        String where = "WHERE id_produit = " + idProd;
         String query_libelle = "SELECT name FROM produit ";
-        String query_main_category = "SELECT main_category FROM produit JOIN category ON produit.category = categories.Id_cat";
+        String query_main_category = "SELECT main_category FROM produit JOIN categories ON produit.category = categories.Id_cat";
 
-        String query_sub_category = "SELECT main_category FROM produit JOIN category ON produit.category = categories.Id_cat";
-        String query_rating = "SELECT rating FROM produit ";
-        String query_nb_reviews = "SELECT nb_reviews FROM produit ";
-        String query_discounted_price = "SELECT discounted_price FROM produit ";
+        String query_sub_category = "SELECT sub_category FROM produit JOIN categories ON produit.category = categories.Id_cat";
+        String query_rating = "SELECT ratings FROM produit ";
+        String query_nb_reviews = "SELECT no_of_ratings FROM produit ";
+        String query_discounted_price = "SELECT discount_price FROM produit ";
         String query_actual_price = "SELECT actual_price FROM produit ";
         String query_discount_percentage = "SELECT discount_percentage FROM produit ";
 
@@ -48,15 +48,15 @@ public class Produits {
             }
             ResultSet res_rating = stm.executeQuery(query_rating + " " + where);
             if (res_rating.next()) {
-                rating = res_rating.getDouble("rating");
+                rating = res_rating.getDouble("ratings");
             }
             ResultSet res_nb_reviews = stm.executeQuery(query_nb_reviews + " " + where);
             if (res_nb_reviews.next()) {
-                nb_reviews = res_nb_reviews.getInt("nb_reviews");
+                nb_reviews = res_nb_reviews.getInt("no_of_ratings");
             }
             ResultSet res_discounted_price = stm.executeQuery(query_discounted_price + " " + where);
             if (res_discounted_price.next()) {
-                discounted_price = res_discounted_price.getInt("discounted_price");
+                discounted_price = res_discounted_price.getInt("discount_price");
             }
             ResultSet res_actual_price = stm.executeQuery(query_actual_price + " " + where);
             if (res_actual_price.next()) {
@@ -68,7 +68,12 @@ public class Produits {
             System.out.println("Requete/Syntaxe incorrect");
             e.printStackTrace();
         }
-        discount_percentage = discounted_price *100 / actual_price;
+        if (actual_price != 0) {
+            discount_percentage = discounted_price * 100 / actual_price;
+        } else {
+            discount_percentage = 0; // 或其他默认值
+        }
+
         System.out.println("Produit libelle : " + libelle);
         System.out.println("Produit main_category : " + main_category);
         System.out.println("Produit sub_category : " + sub_category);
