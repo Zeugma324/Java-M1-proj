@@ -28,42 +28,23 @@ public class Produits {
         String query_actual_price = "SELECT actual_price FROM produit ";
         String query_discount_percentage = "SELECT discount_percentage FROM produit ";
 
-
+        String query_all = "SELECT * FROM produit JOIN categories ON produit.category = categories.Id_cat";
 
         try (Connection con = DriverManager.getConnection(url, user, mdp);
              Statement stm = con.createStatement();)
         {
-            ResultSet res_libelle = stm.executeQuery(query_libelle + " " + where);
-            if (res_libelle.next()) {
-                libelle = res_libelle.getString("name");
-            }
 
-            ResultSet res_main_category = stm.executeQuery(query_main_category + " " + where);
-            if (res_main_category.next()) {
-                main_category = res_main_category.getString("main_category");
-            }
-            ResultSet res_sub_category = stm.executeQuery(query_sub_category + " " + where);
-            if (res_sub_category.next()) {
-                sub_category = res_sub_category.getString("sub_category");
-            }
-            ResultSet res_rating = stm.executeQuery(query_rating + " " + where);
-            if (res_rating.next()) {
-                rating = res_rating.getDouble("ratings");
-            }
-            ResultSet res_nb_reviews = stm.executeQuery(query_nb_reviews + " " + where);
-            if (res_nb_reviews.next()) {
-                nb_reviews = res_nb_reviews.getInt("no_of_ratings");
-            }
-            ResultSet res_discounted_price = stm.executeQuery(query_discounted_price + " " + where);
-            if (res_discounted_price.next()) {
-                discounted_price = res_discounted_price.getInt("discount_price");
-            }
-            ResultSet res_actual_price = stm.executeQuery(query_actual_price + " " + where);
-            if (res_actual_price.next()) {
-                actual_price = res_actual_price.getInt("actual_price");
-            }
+            ResultSet res_all = stm.executeQuery(query_all + " " + where);
+            if (res_all.next()) {
+                libelle = res_all.getString("name");
+                main_category = res_all.getString("main_category");
+                sub_category = res_all.getString("sub_category");
+                rating = res_all.getDouble("ratings");
+                nb_reviews = res_all.getInt("no_of_ratings");
+                discounted_price = res_all.getInt("discount_price");
+                actual_price = res_all.getInt("actual_price");
 
-
+            }
         } catch (SQLException e) {
             System.out.println("Requete/Syntaxe incorrect");
             e.printStackTrace();
@@ -86,6 +67,6 @@ public class Produits {
 
     }
     public static void main(String[] args) {
-        visualiser(1);
+        visualiser(3);
     }
 }
