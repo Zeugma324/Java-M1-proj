@@ -1,14 +1,14 @@
 package Requets;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import connexion.Connect;
 
 public class Produits {
-    static String url = "jdbc:mysql://sql7.freesqldatabase.com:3306/sql7756463";
-    static String user = "sql7756463";
-    static String mdp = "iFgwWVZFHW";
 
     //US 0.1 Je veux visualiser les détails d'un produit : prix unitaire, prix au kg, nutriscore, libellé article, poids, condionnement, ...
-    public static void visualiser ( int idProd){
+    public static void visualiser ( int idProd) throws SQLException{
         String libelle = "";
         String main_category = "";
         String sub_category = "";
@@ -22,11 +22,9 @@ public class Produits {
 
         String query_all = "SELECT * FROM produit JOIN categories ON produit.category = categories.Id_cat";
 
-        try (Connection con = DriverManager.getConnection(url, user, mdp);
-             Statement stm = con.createStatement())
-        {
 
-            ResultSet res_all = stm.executeQuery(query_all + " " + where);
+            ResultSet res_all = Connect.executeQuery(query_all + " " + where);
+            
             if (res_all.next()) {
                 libelle = res_all.getString("name");
                 main_category = res_all.getString("main_category");
@@ -37,10 +35,7 @@ public class Produits {
                 actual_price = res_all.getInt("actual_price");
 
             }
-        } catch (SQLException e) {
-            System.out.println("Requete/Syntaxe incorrect");
-            e.printStackTrace();
-        }
+       
         if (actual_price != 0) {
             discount_percentage = discounted_price * 100 / actual_price;
         } else {
@@ -60,14 +55,12 @@ public class Produits {
     }
 
     //US 0.4 Je veux trier une liste de produits
-    public static void trierProduits(int idCat){
+    public static void trierProduits(int idCat) throws SQLException{
         String where = "WHERE category = " + idCat;
         String query = "SELECT name FROM produit JOIN categories ON produit.category = categories.Id_cat";
 
-        try (Connection con = DriverManager.getConnection(url, user, mdp);
-            Statement stm = con.createStatement())
-        {
-            ResultSet res_all = stm.executeQuery(query + " " + where);
+        
+            ResultSet res_all = Connect.executeQuery(query + " " + where);
             int count = 1;
             while (res_all.next()) {
                 System.out.print(count + ". ");
@@ -75,12 +68,8 @@ public class Produits {
                 count++;
             }
 
-        }catch (SQLException e) {
-            System.out.println("Requete/Syntaxe incorrect");
-            e.printStackTrace();
-        }
     }
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
         // exemple de utilisation de US 0.1
 //        visualiser(3);
 
