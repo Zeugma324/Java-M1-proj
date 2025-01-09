@@ -2,32 +2,33 @@ package Requets;
 
 import java.sql.*;
 import javax.swing.*;
+import connexion.Connect;
 
 public class Produits {
+
     static String url = "jdbc:mysql://sql7.freesqldatabase.com:3306/sql7756463";
     static String user = "sql7756463";
     static String mdp = "iFgwWVZFHW";
 
-    //US 0.1 Je veux visualiser les détails d'un produit : prix unitaire, prix au kg, nutriscore, libellé article, poids, condionnement, ...
-    public static void visualiser ( int idProd){
+    // US 0.1 Visualiser les détails d'un produit
+    public static void visualiser(int idProd) throws SQLException {
         String libelle = "";
         String main_category = "";
         String sub_category = "";
-        Double rating = 0.0;
+        double rating = 0.0;
         int nb_reviews = 0;
         int discounted_price = 0;
         int actual_price = 0;
         int discount_percentage;
 
         String where = "WHERE id_produit = " + idProd;
-
-        String query_all = "SELECT * FROM produit JOIN categories ON produit.category = categories.Id_cat";
+        String query_all = "SELECT * FROM produit JOIN categories ON produit.category = categories.Id_cat ";
 
         try (Connection con = DriverManager.getConnection(url, user, mdp);
-             Statement stm = con.createStatement())
-        {
+             Statement stm = con.createStatement()) {
 
             ResultSet res_all = stm.executeQuery(query_all + " " + where);
+
             if (res_all.next()) {
                 libelle = res_all.getString("name");
                 main_category = res_all.getString("main_category");
@@ -37,37 +38,39 @@ public class Produits {
                 discounted_price = res_all.getInt("discount_price");
                 actual_price = res_all.getInt("actual_price");
             }
+
+            if (actual_price != 0) {
+                discount_percentage = discounted_price * 100 / actual_price;
+            } else {
+                discount_percentage = 0;
+            }
+
+            System.out.println("Produit libelle : " + libelle);
+            System.out.println("Produit main_category : " + main_category);
+            System.out.println("Produit sub_category : " + sub_category);
+            System.out.println("Produit rating : " + rating);
+            System.out.println("Produit nb_reviews : " + nb_reviews);
+            System.out.println("Produit discounted_price : " + discounted_price);
+            System.out.println("Produit actual_price : " + actual_price);
+            System.out.println("Produit discount_percentage : " + discount_percentage + "%");
+
         } catch (SQLException e) {
-            System.out.println("Requete/Syntaxe incorrect");
+            System.out.println("Erreur lors de la récupération des détails du produit.");
             e.printStackTrace();
         }
-        if (actual_price != 0) {
-            discount_percentage = discounted_price * 100 / actual_price;
-        } else {
-            discount_percentage = 0; // 或其他默认值
-        }
-
-        System.out.println("Produit libelle : " + libelle);
-        System.out.println("Produit main_category : " + main_category);
-        System.out.println("Produit sub_category : " + sub_category);
-        System.out.println("Produit rating : " + rating);
-        System.out.println("Produit nb_reviews : " + nb_reviews);
-        System.out.println("Produit discounted_price : " + discounted_price);
-        System.out.println("Produit actual_price : " + actual_price);
-        System.out.println("Produit discount_percentage : " + discount_percentage + "%");
-
-
     }
 
-    //US 0.4 Je veux trier une liste de produits
-    public static void trierProduits(int idCat, String trier_par, String trier_ord){
+    // US 0.4 Trier une liste de produits
+    public static void trierProduits(int idCat, String trier_par, String trier_ord) {
         String where = "WHERE category = " + idCat;
-        String query = "SELECT name FROM produit JOIN categories ON produit.category = categories.Id_cat";
+        String query = "SELECT name FROM produit JOIN categories ON produit.category = categories.Id_cat ";
         String trier = "ORDER BY " + trier_par + " " + trier_ord;
+
         try (Connection con = DriverManager.getConnection(url, user, mdp);
-            Statement stm = con.createStatement())
-        {
-            ResultSet res_all = stm.executeQuery(query + " " + where);
+             Statement stm = con.createStatement()) {
+
+            ResultSet res_all = stm.executeQuery(query + " " + where + " " + trier);
+
             int count = 1;
             while (res_all.next()) {
                 System.out.print(count + ". ");
@@ -75,37 +78,59 @@ public class Produits {
                 count++;
             }
 
-        }catch (SQLException e) {
-            System.out.println("Requete/Syntaxe incorrect");
+        } catch (SQLException e) {
+            System.out.println("Erreur lors du tri des produits.");
             e.printStackTrace();
         }
     }
-    
-    public static void trier(int idCat){
 
+    public static void trier(int idCat) {
         JPanel panel = new JPanel();
+
+        // Options de tri
         String[] options = {"libelle", "rating", "price"};
         JComboBox<String> comboBox = new JComboBox<>(options);
+        panel.add(new JLabel("Trier par :"));
         panel.add(comboBox);
 
-        String[] ordre = {"ASC", "DESC"};
+        // Ordres de tri
+        String[] ordre = {"descending", "ascending"};
         JComboBox<String> comboBox2 = new JComboBox<>(ordre);
+        panel.add(new JLabel("Ordre :"));
         panel.add(comboBox2);
-
-        int result = JOptionPane.showConfirmDialog(null, panel, "Comment tirer ?", JOptionPane.OK_CANCEL_OPTION);
+        String trier = "";
+        String order = "";
+        int result = JOptionPane.showConfirmDialog(null, panel, "Comment trier ?", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
-            String trier_par = comboBox.getSelectedItem().toString();
-            String trier_ord = comboBox2.getSelectedItem().toString();
-            trierProduits(idCat, trier_par, trier_ord);
+            trier = comboBox.getSelectedItem().toString();
+            order = comboBox2.getSelectedItem().toString();
         }
+        String trier_par = switch(trier){
+            case "libelle" -> "name";
+            case "rating" -> "ratings";
+            case "price" -> "discount_price";
+            default -> "";
+        };
+        String trier_ord = switch (order){
+            case "ascending" -> "ASC";
+            case "descending" -> "DESC";
+            default -> "";
+        };
+
+
+        trierProduits(idCat, trier_par, trier_ord);
     }
+
     public static void main(String[] args) {
-        // exemple de utilisation de US 0.1
-//        visualiser(3);
+        try {
+            // Exemple d'utilisation de US 0.1
+            visualiser(3);
 
-        // exemple de utilisation de US 0.4
-//        trierProduits(1, "name", "ASC");
-
-        trier(1);
+            // Exemple d'utilisation de US 0.4
+            trier(1);
+        } catch (SQLException e) {
+            System.out.println("Erreur SQL détectée.");
+            e.printStackTrace();
+        }
     }
 }
