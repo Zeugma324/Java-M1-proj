@@ -42,14 +42,14 @@ public class Produits {
                 discount_percentage = 0;
             }
 
-            System.out.println("Produit libelle : " + libelle);
-            System.out.println("Produit main_category : " + main_category);
-            System.out.println("Produit sub_category : " + sub_category);
-            System.out.println("Produit rating : " + rating);
-            System.out.println("Produit nb_reviews : " + nb_reviews);
-            System.out.println("Produit discounted_price : " + discounted_price);
-            System.out.println("Produit actual_price : " + actual_price);
-            System.out.println("Produit discount_percentage : " + discount_percentage + "%");
+            System.out.println("Objects.Produit libelle : " + libelle);
+            System.out.println("Objects.Produit main_category : " + main_category);
+            System.out.println("Objects.Produit sub_category : " + sub_category);
+            System.out.println("Objects.Produit rating : " + rating);
+            System.out.println("Objects.Produit nb_reviews : " + nb_reviews);
+            System.out.println("Objects.Produit discounted_price : " + discounted_price);
+            System.out.println("Objects.Produit actual_price : " + actual_price);
+            System.out.println("Objects.Produit discount_percentage : " + discount_percentage + "%");
 
         } catch (SQLException e) {
             System.out.println("Erreur lors de la récupération des détails du produit.");
@@ -57,7 +57,6 @@ public class Produits {
         }
     }
 
-<<<<<<< Updated upstream
     // US 0.4 Trier une liste de produits
     public static void trierProduits(int idCat, String trier_par, String trier_ord) {
         String where = "WHERE category = " + idCat;
@@ -68,15 +67,6 @@ public class Produits {
              Statement stm = con.createStatement()) {
 
             ResultSet res_all = stm.executeQuery(query + " " + where + " " + trier);
-=======
-    //US 0.4 Je veux trier une liste de produits
-    public static void trierProduits(int idCat) throws SQLException{
-    	 String where = "WHERE categories.Id_cat = " + idCat;
-         String query = "SELECT produit.name, produit.brand, produit.prixUnitP, produit.ratings, produit.quantity " +
-                        "FROM produit " +
-                        "JOIN categories ON produit.category = categories.Id_cat " +
-                        where;
->>>>>>> Stashed changes
 
             int count = 1;
             while (res_all.next()) {
@@ -90,12 +80,6 @@ public class Produits {
             e.printStackTrace();
         }
     }
-<<<<<<< Updated upstream
-=======
-    public static void main(String[] args) throws SQLException {
-        // exemple de utilisation de US 0.1
-    	//visualiser(3);
->>>>>>> Stashed changes
 
     public static void trier(int idCat) {
         JPanel panel = new JPanel();
