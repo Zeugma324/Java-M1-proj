@@ -105,7 +105,7 @@ public class USyihan {
 
     //显示某类别产品的库存数量
     public static void StockParSubCat(int catID){
-        String sql = "SELECT stock.Id_produit, stock.quantity, category FROM stock JOIN produit on stock.Id_produit = produit.Id_produit WHERE category = ? ";
+        String sql = "SELECT stock.Id_produit, SUM(stock.quantity) AS total_quantity, category FROM stock JOIN produit on stock.Id_produit = produit.Id_produit WHERE category = ? GROUP BY stock.Id_produit ";
 
         try (Connection connection = DriverManager.getConnection(url, user, mdp);
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -114,9 +114,14 @@ public class USyihan {
             ResultSet resultSet = statement.executeQuery();
 
             System.out.println("produits dans la categorie " + catID + " : ");
+            int totalStock = 0;
             while (resultSet.next()){
-                System.out.println("Produit ID : " + resultSet.getInt("Id_produit") + " QteStock : " + resultSet.getInt("quantity"));
+                int Qte = resultSet.getInt("total_quantity");
+                totalStock += Qte;
+                System.out.println("Produit ID : " + resultSet.getInt("Id_produit") + " QteStock : " + Qte);
             }
+            // 显示加总数量
+            System.out.println("Total stock dans la categorie " + catID + " : " + totalStock);
 
         }catch (Exception e) {
             e.printStackTrace();
