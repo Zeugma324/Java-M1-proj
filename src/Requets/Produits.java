@@ -6,7 +6,6 @@ import connexion.Connect;
 
 public class Produits {
 
-
     // US 0.1 Visualiser les détails d'un produit
     public static void visualiser(int idProd) {
         String libelle = "";

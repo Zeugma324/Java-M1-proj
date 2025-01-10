@@ -43,13 +43,13 @@ public class USyan {
 
     // US21 sans steam
     public static void CommandeFrePro(int IdUser) {
-        String query = "SELECT p.Id_produit, p.name, count(Id_commande) as nombreCO\n" +
+        String query = "SELECT p.Id_produit, p.name, count(p.Id_produit) as nombreCO\n" +
                 "FROM produit p, panier pa, utilisateur u, PanierCommande PC\n" +
                 "WHERE p.Id_produit=pa.Id_produit\n" +
                 "AND pa.Id_user=u.Id_user\n" +
                 "AND pa.Id_panier=PC.panier_id\n" +
                 "GROUP BY p.Id_produit, p.name\n" +
-                "ORDER BY count(Id_commande) DESC\n";
+                "ORDER BY count(p.Id_produit) DESC\n";
 
         try (Connection con = DriverManager.getConnection(url, user, mdp);
              Statement stm = con.createStatement()) {
@@ -78,15 +78,51 @@ public class USyan {
     }
 
 
-
-
-
 // US22 Je veux consulter mes habitudes de consommation (bio, nutriscore, catégorie de produits, marques).
 
+    public static void Habitudes(int IdUser) {
+        String query="SELECT p.ratings, p.no_of_ratings, ca.main_category, ca.sub_category\n" +
+                "FROM produit p, categories ca\n" +
+                "WHERE p.category=ca.Id-cat\n" +"AND Id_user="+IdUser;
+        try (Connection con = DriverManager.getConnection(url, user, mdp);
+             Statement stm = con.createStatement()) {
+            ResultSet resultSet = stm.executeQuery(query);
+
+        System.out.println("Liste des habitudes de consommation pour l'utilisateur " + IdUser + " :");
+        boolean hasResults = false;
+
+        while (resultSet.next()) {
+            hasResults = true;
+            int idProduit = resultSet.getInt("Id_produit");
+            String name = resultSet.getString("name");
+            boolean isBio = resultSet.getBoolean("is_bio");
+            String nutriScore = resultSet.getString("nutri_score");
+            String category = resultSet.getString("category");
+            String brand = resultSet.getString("brand");
+            int nombreCommandes = resultSet.getInt("nombreCO");
+
+            // Afficher les résultats
+            System.out.println("Produit ID : " + idProduit +
+                    ", Nom : " + name +
+                    ", Bio : " + (isBio ? "Oui" : "Non") +
+                    ", Nutri-Score : " + nutriScore +
+                    ", Catégorie : " + category +
+                    ", Marque : " + brand +
+                    ", Nombre de commandes : " + nombreCommandes);
+        }
+        if (!hasResults) {
+            System.out.println("Aucun produit trouvé pour cet utilisateur.");
+        }
+    } catch (SQLException e) {
+        System.err.println("Erreur lors de l'exécution de la requête.");
+        e.printStackTrace();
+    }
+    }
+//
 
     public static void main(String[] args) {
         VisualiserProduit(3);
         CommandeFrePro(34);
+        Habitudes(1);
     }
 }
-
