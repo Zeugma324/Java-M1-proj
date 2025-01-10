@@ -123,6 +123,30 @@ public class USyihan {
         }
 
         }
+    //修改某类别产品的库存数量
+    public static void ModifierStockParSubCat(int catID, int StockChange){
+        String sql = "UPDATE stock JOIN produit on stock.Id_produit = produit.Id_produit Set quantity = quantity + ? WHERE category = ?";
+        try (Connection connection = DriverManager.getConnection(url, user, mdp);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, StockChange);
+            statement.setInt(2, catID);
+
+            int rowsUpdated = statement.executeUpdate();
+            if(rowsUpdated > 0){
+                System.out.println("Stock change : " + StockChange);
+            }else {
+                System.out.println("Error! Verifiez ID categorie.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+
 
 
 
@@ -149,15 +173,21 @@ public class USyihan {
         System.out.println("Original Stock : ");
         QteStock(produitID);
             //显示修改更新后的数据
-        int QteModifier = 10;
+        int QteModifier = 5;
         System.out.println("Apres modifier: ");
         QteStockModifier(produitID, QteModifier);
         QteStock(produitID);
 
             //显示原始某子类产品的各种产品库存
         int catID = 1;
-        System.out.println("Original Stock : ");
+        System.out.println("Original Stock par category : ");
         StockParSubCat(catID);
+
+            //显示修改更新后某子类产品的各种产品库存
+        int StockChange = 10;
+        ModifierStockParSubCat(catID, StockChange);
+        StockParSubCat(catID);
+
 
 
 
