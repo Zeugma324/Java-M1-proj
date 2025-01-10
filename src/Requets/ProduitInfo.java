@@ -15,7 +15,7 @@ public class ProduitInfo {
 
     @Override
     public String toString() {
-        return "Produit ID: " + idProduit +
+        return "Objects.Produit ID: " + idProduit +
                 ", Nom: " + name +
                 ", Nombre de commandes: " + nombreCommandes;
     }

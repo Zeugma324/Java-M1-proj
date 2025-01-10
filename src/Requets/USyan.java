@@ -64,7 +64,7 @@ public class USyan {
                 String name = resultSet.getString("name");
                 int nombreCommandes = resultSet.getInt("nombreCO");
 
-                System.out.println("Produit ID : " + idProduit +
+                System.out.println("Objects.Produit ID : " + idProduit +
                         ", Nom : " + name +
                         ", Nombre de commandes : " + nombreCommandes);
             }
