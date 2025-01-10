@@ -62,7 +62,7 @@ public class USyihan {
         }
     }
 
-    //us3.3 修改产品库存、类别、客户的数据
+    //us3.3 修改产品库存、类别、客户的数据 editer les statistique sur produits，category...
     //显示产品原始库存数量
     public static void QteStock(int produitID){
         String sql = "SELECT Id_produit, quantity FROM stock WHERE Id_produit = ?";
