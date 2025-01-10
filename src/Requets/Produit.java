@@ -1,28 +1,47 @@
 package Requets;
-
-
-
-class Produit {
-    private String libelle;
-    private String marque;
-    private double prixUnit;
-    private int nutriscore;
-    private int qteStocke;
-
-    public Produit(String libelle, String marque, double prixUnit, int nutriscore, int qteStocke) {
-        this.libelle = libelle;
-        this.marque = marque;
-        this.prixUnit = prixUnit;
-        this.nutriscore = nutriscore;
-        this.qteStocke = qteStocke;
+public class Produit {
+    private String name;
+    private double actual_price;
+    private int ratings;
+    private int no_of_ratings;
+    private String category;
+    
+    public Produit(String name, double actual_price, int ratings, int no_of_ratings, String category) {
+        this.name = name;
+        this.actual_price = actual_price;
+        this.ratings = ratings;
+        this.no_of_ratings = no_of_ratings;
+        this.category = category;
     }
 
-    public double getPrixUnitP() {
-        return prixUnit;
+    public String getName() {
+        return name;
+    }
+
+    public double getActualPrice() {
+        return actual_price;
+    }
+
+    public int getRatings() {
+        return ratings;
+    }
+
+    public int getNoOfRatings() {
+        return no_of_ratings;
+    }
+
+    public String getCategory() {
+        return category;
     }
 
     @Override
     public String toString() {
-        return libelle + " (" + marque + ") - Prix: " + prixUnit + "€, Nutriscore: " + nutriscore;
+        return "Produit{" +
+                "name='" + name + '\'' +
+                ", actual_price=" + actual_price +
+                ", ratings=" + ratings +
+                ", no_of_ratings=" + no_of_ratings +
+                ", category='" + category + '\'' +
+                '}';
     }
 }

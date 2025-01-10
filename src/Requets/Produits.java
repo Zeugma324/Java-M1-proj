@@ -6,9 +6,6 @@ import connexion.Connect;
 
 public class Produits {
 
-    static String url = "jdbc:mysql://sql7.freesqldatabase.com:3306/sql7756463";
-    static String user = "sql7756463";
-    static String mdp = "iFgwWVZFHW";
 
     // US 0.1 Visualiser les détails d'un produit
     public static void visualiser(int idProd) {
@@ -24,7 +21,7 @@ public class Produits {
         String where = "WHERE id_produit = " + idProd;
         String query_all = "SELECT * FROM produit JOIN categories ON produit.category = categories.Id_cat";
 
-        try (Connection con = DriverManager.getConnection(url, user, mdp);
+        try (Connection con = Connect.getConnection();
              Statement stm = con.createStatement()) {
 
             ResultSet res_all = stm.executeQuery(query_all + " " + where);
@@ -60,16 +57,26 @@ public class Produits {
         }
     }
 
+<<<<<<< Updated upstream
     // US 0.4 Trier une liste de produits
     public static void trierProduits(int idCat, String trier_par, String trier_ord) {
         String where = "WHERE category = " + idCat;
         String query = "SELECT name FROM produit JOIN categories ON produit.category = categories.Id_cat";
         String trier = "ORDER BY " + trier_par + " " + trier_ord;
 
-        try (Connection con = DriverManager.getConnection(url, user, mdp);
+        try (Connection con = Connect.getConnection();
              Statement stm = con.createStatement()) {
 
             ResultSet res_all = stm.executeQuery(query + " " + where + " " + trier);
+=======
+    //US 0.4 Je veux trier une liste de produits
+    public static void trierProduits(int idCat) throws SQLException{
+    	 String where = "WHERE categories.Id_cat = " + idCat;
+         String query = "SELECT produit.name, produit.brand, produit.prixUnitP, produit.ratings, produit.quantity " +
+                        "FROM produit " +
+                        "JOIN categories ON produit.category = categories.Id_cat " +
+                        where;
+>>>>>>> Stashed changes
 
             int count = 1;
             while (res_all.next()) {
@@ -83,6 +90,12 @@ public class Produits {
             e.printStackTrace();
         }
     }
+<<<<<<< Updated upstream
+=======
+    public static void main(String[] args) throws SQLException {
+        // exemple de utilisation de US 0.1
+    	//visualiser(3);
+>>>>>>> Stashed changes
 
     public static void trier(int idCat) {
         JPanel panel = new JPanel();
