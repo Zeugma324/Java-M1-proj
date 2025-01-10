@@ -5,7 +5,7 @@ import connexion.Connect;
 import java.sql.*;
 
 public class User {
-    private int idUser;
+    private final int idUser;
     private String lastname;
     private String name;
     private String tel;
@@ -110,8 +110,7 @@ public class User {
                 '}';
     }
     public static void main(String[] args) throws SQLException {
-//        User user = User.findUtilisateur(1);
-//        System.out.println(user);
+
 
         User user1 = User.createUtilisateur("Kaiyang","ZHANG");
 
