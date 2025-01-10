@@ -62,6 +62,52 @@ public class USyihan {
         }
     }
 
+    //us3.3 修改产品库存、类别、客户的数据
+    //显示产品原始库存数量
+    public static void QteStock(int produitID){
+        String sql = "SELECT Id_produit, quantity FROM stock WHERE Id_produit = ?";
+
+        try (Connection con = DriverManager.getConnection(url, user, mdp);
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setInt(1, produitID);
+
+            ResultSet resultSet = statement.executeQuery();
+
+            if(resultSet.next()){
+                System.out.println("Quantity stock de produit " + produitID + " : ");
+                System.out.println(resultSet.getInt("quantity"));
+            }else{
+                System.out.println("Aucun produit trouvé");
+            }
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    //修改产品库存数量
+    public static void QteStockModifier(int produitID, int QteModifier){
+        String sql = "UPDATE stock Set quantity = quantity + ? WHERE Id_produit = ?";
+        try (Connection con = DriverManager.getConnection(url, user, mdp);
+             PreparedStatement statement = con.prepareStatement(sql)) {
+            statement.setInt(1, QteModifier);
+            statement.setInt(2, produitID);
+
+            int rowsUpdated = statement.executeUpdate();
+            if(rowsUpdated > 0){
+                System.out.println("Stock change : " + QteModifier);
+            }else {
+                System.out.println("Error! Verifiez produitID.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //修改某类别产品的销量
+
+
+
+
 
 
 
@@ -75,6 +121,22 @@ public class USyihan {
         // us1.5 Je veux reprendre un panier en cours afin de finaliser mes achats.
         int userID = 1;
         PanierEnCours(userID);
+
+        //us3.3
+            //显示原始库存
+        int produitID = 1;
+        System.out.println("Original information : ");
+        QteStock(produitID);
+            //显示修改更新后的数据
+        int QteModifier = 10;
+        System.out.println("Apres modifier: ");
+        QteStockModifier(produitID, QteModifier);
+        QteStock(produitID);
+
+
+
+
+
 
 
 
