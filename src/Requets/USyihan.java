@@ -67,8 +67,8 @@ public class USyihan {
     public static void QteStock(int produitID){
         String sql = "SELECT Id_produit, quantity FROM stock WHERE Id_produit = ?";
 
-        try (Connection con = DriverManager.getConnection(url, user, mdp);
-             PreparedStatement statement = con.prepareStatement(sql)) {
+        try (Connection connection = DriverManager.getConnection(url, user, mdp);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, produitID);
 
             ResultSet resultSet = statement.executeQuery();
@@ -86,8 +86,8 @@ public class USyihan {
     //修改产品库存数量
     public static void QteStockModifier(int produitID, int QteModifier){
         String sql = "UPDATE stock Set quantity = quantity + ? WHERE Id_produit = ?";
-        try (Connection con = DriverManager.getConnection(url, user, mdp);
-             PreparedStatement statement = con.prepareStatement(sql)) {
+        try (Connection connection = DriverManager.getConnection(url, user, mdp);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, QteModifier);
             statement.setInt(2, produitID);
 
@@ -103,7 +103,27 @@ public class USyihan {
         }
     }
 
-    //修改某类别产品的销量
+    //显示某类别产品的库存数量
+    public static void StockParSubCat(int catID){
+        String sql = "SELECT stock.Id_produit, stock.quantity, category FROM stock JOIN produit on stock.Id_produit = produit.Id_produit WHERE category = ? ";
+
+        try (Connection connection = DriverManager.getConnection(url, user, mdp);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, catID);
+            ResultSet resultSet = statement.executeQuery();
+
+            System.out.println("produits dans la categorie " + catID + " : ");
+            while (resultSet.next()){
+                System.out.println("Produit ID : " + resultSet.getInt("Id_produit") + " QteStock : " + resultSet.getInt("quantity"));
+            }
+
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        }
+
 
 
 
@@ -126,13 +146,18 @@ public class USyihan {
         //us3.3
             //显示原始库存
         int produitID = 1;
-        System.out.println("Original information : ");
+        System.out.println("Original Stock : ");
         QteStock(produitID);
             //显示修改更新后的数据
         int QteModifier = 10;
         System.out.println("Apres modifier: ");
         QteStockModifier(produitID, QteModifier);
         QteStock(produitID);
+
+            //显示原始某子类产品的各种产品库存
+        int catID = 1;
+        System.out.println("Original Stock : ");
+        StockParSubCat(catID);
 
 
 
