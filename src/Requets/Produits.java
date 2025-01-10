@@ -6,9 +6,6 @@ import connexion.Connect;
 
 public class Produits {
 
-//    static String url = "jdbc:mysql://sql7.freesqldatabase.com:3306/sql7756463";
-//    static String user = "sql7756463";
-//    static String mdp = "iFgwWVZFHW";
 
     // US 0.1 Visualiser les détails d'un produit
     public static void visualiser(int idProd) {
