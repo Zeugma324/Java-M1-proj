@@ -1,4 +1,4 @@
-package Requets;
+package Requets.WaitingMerged;
 
 public class ProduitInfo {
 

@@ -1,13 +1,14 @@
-package Requets;
+package Requets.Produits;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import Objects.Produit;
 import connexion.Connect;
 
-public class Main {
+public class Main_sub {
 
     // US 0.1 Je veux visualiser les détails d'un produit : prix unitaire, prix au kg, nutriscore, libellé article, poids, conditionnement, ...
 	public static void visualiserProduit(int idProd) throws SQLException {

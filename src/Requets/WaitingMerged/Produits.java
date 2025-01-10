@@ -1,14 +1,15 @@
-package Requets;
+package Requets.WaitingMerged;
 
 import java.sql.*;
 import javax.swing.*;
+
 import connexion.Connect;
 
 public class Produits {
 
 
     // US 0.1 Visualiser les détails d'un produit
-    public static void visualiser(int idProd) {
+    public static void visualiser(int idProd) throws SQLException {
         String libelle = "";
         String main_category = "";
         String sub_category = "";
@@ -21,19 +22,15 @@ public class Produits {
         String where = "WHERE id_produit = " + idProd;
         String query_all = "SELECT * FROM produit JOIN categories ON produit.category = categories.Id_cat";
 
-        try (Connection con = Connect.getConnection();
-             Statement stm = con.createStatement()) {
-
-            ResultSet res_all = stm.executeQuery(query_all + " " + where);
-
-            if (res_all.next()) {
-                libelle = res_all.getString("name");
-                main_category = res_all.getString("main_category");
-                sub_category = res_all.getString("sub_category");
-                rating = res_all.getDouble("ratings");
-                nb_reviews = res_all.getInt("no_of_ratings");
-                discounted_price = res_all.getInt("discount_price");
-                actual_price = res_all.getInt("actual_price");
+        try(ResultSet res = Connect.executeQuery(query_all + " " + where)){
+            if (res.next()) {
+                libelle = res.getString("name");
+                main_category = res.getString("main_category");
+                sub_category = res.getString("sub_category");
+                rating = res.getDouble("ratings");
+                nb_reviews = res.getInt("no_of_ratings");
+                discounted_price = res.getInt("discount_price");
+                actual_price = res.getInt("actual_price");
             }
 
             if (actual_price != 0) {
@@ -50,11 +47,11 @@ public class Produits {
             System.out.println("Objects.Produit discounted_price : " + discounted_price);
             System.out.println("Objects.Produit actual_price : " + actual_price);
             System.out.println("Objects.Produit discount_percentage : " + discount_percentage + "%");
-
-        } catch (SQLException e) {
-            System.out.println("Erreur lors de la récupération des détails du produit.");
+        }catch (SQLException e){
             e.printStackTrace();
         }
+
+
     }
 
     // US 0.4 Trier une liste de produits
@@ -63,21 +60,26 @@ public class Produits {
         String query = "SELECT name FROM produit JOIN categories ON produit.category = categories.Id_cat";
         String trier = "ORDER BY " + trier_par + " " + trier_ord;
 
-        try (Connection con = Connect.getConnection();
-             Statement stm = con.createStatement()) {
+//        try (Connection con = Connect.getConnection();
+//             Statement stm = con.createStatement()) {
+//
+//            ResultSet res_all = stm.executeQuery(query + " " + where + " " + trier);
+//
+//            int count = 1;
+//            while (res_all.next()) {
+//                System.out.print(count + ". ");
+//                System.out.println(res_all.getString("name"));
+//                count++;
+//            }
+//
+//        } catch (SQLException e) {
+//            System.out.println("Erreur lors du tri des produits.");
+//            e.printStackTrace();
+//        }
+        try(ResultSet res = Connect.executeQuery(query)){
 
-            ResultSet res_all = stm.executeQuery(query + " " + where + " " + trier);
+        }catch (SQLException e){
 
-            int count = 1;
-            while (res_all.next()) {
-                System.out.print(count + ". ");
-                System.out.println(res_all.getString("name"));
-                count++;
-            }
-
-        } catch (SQLException e) {
-            System.out.println("Erreur lors du tri des produits.");
-            e.printStackTrace();
         }
     }
 
@@ -118,7 +120,7 @@ public class Produits {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
         // Exemple d'utilisation de US 0.1
         visualiser(3);
 
