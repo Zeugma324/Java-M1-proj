@@ -64,7 +64,7 @@ public class USyan {
                 String name = resultSet.getString("name");
                 int nombreCommandes = resultSet.getInt("nombreCO");
 
-                System.out.println("- Produit ID : " + idProduit +
+                System.out.println("Produit ID : " + idProduit +
                         ", Nom : " + name +
                         ", Nombre de commandes : " + nombreCommandes);
             }
@@ -77,10 +77,16 @@ public class USyan {
         }
     }
 
+
+
+
+
+// US22 Je veux consulter mes habitudes de consommation (bio, nutriscore, catégorie de produits, marques).
+
+
     public static void main(String[] args) {
         VisualiserProduit(3);
         CommandeFrePro(34);
     }
-
 }
 
