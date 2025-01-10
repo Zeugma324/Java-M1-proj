@@ -220,9 +220,7 @@ public class Produit {
             }
         }
     }
-    public static void main(String[] args) throws SQLException {
-        trierProduitsParPrix(1);
-    }
+
 }
 
 
