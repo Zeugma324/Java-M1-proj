@@ -83,7 +83,7 @@ public class User {
         return lastname;
     }
 
-    public int getIdUser() {
+    public int getId() {
         return idUser;
     }
 
