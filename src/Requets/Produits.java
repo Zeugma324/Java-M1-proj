@@ -6,9 +6,9 @@ import connexion.Connect;
 
 public class Produits {
 
-    static String url = "jdbc:mysql://sql7.freesqldatabase.com:3306/sql7756463";
-    static String user = "sql7756463";
-    static String mdp = "iFgwWVZFHW";
+//    static String url = "jdbc:mysql://sql7.freesqldatabase.com:3306/sql7756463";
+//    static String user = "sql7756463";
+//    static String mdp = "iFgwWVZFHW";
 
     // US 0.1 Visualiser les détails d'un produit
     public static void visualiser(int idProd) {
@@ -24,7 +24,7 @@ public class Produits {
         String where = "WHERE id_produit = " + idProd;
         String query_all = "SELECT * FROM produit JOIN categories ON produit.category = categories.Id_cat";
 
-        try (Connection con = DriverManager.getConnection(url, user, mdp);
+        try (Connection con = Connect.getConnection();
              Statement stm = con.createStatement()) {
 
             ResultSet res_all = stm.executeQuery(query_all + " " + where);
@@ -66,7 +66,7 @@ public class Produits {
         String query = "SELECT name FROM produit JOIN categories ON produit.category = categories.Id_cat";
         String trier = "ORDER BY " + trier_par + " " + trier_ord;
 
-        try (Connection con = DriverManager.getConnection(url, user, mdp);
+        try (Connection con = Connect.getConnection();
              Statement stm = con.createStatement()) {
 
             ResultSet res_all = stm.executeQuery(query + " " + where + " " + trier);
