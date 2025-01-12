@@ -23,17 +23,16 @@ public class Panier {
     private boolean isactive = true;
 
     //create un nouvean panier pour un utilisateur quand le vielle panier est deja validee
-    private Panier( int user_id, int idproduit ) throws SQLException {
+    private Panier( User user, int idproduit ) throws SQLException {
         this.id = calculateID();
         this.start_time = new String(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        this.user = User.findUtilisateur(user_id);
+        this.user = user;
         produits.put(Produit.findProduit(idproduit), 1);
-        String query = "INSERT INTO panier VALUES (" + this.id + ", " + idproduit + ", 1, '" + this.start_time + "' , NULL, " + user_id + ")";
+        String query = "INSERT INTO panier VALUES (" + this.id + ", " + idproduit + ", 1, '" + this.start_time + "' , NULL, " + user.getId() + ")";
     }
 
-    //put an already existed panier into java
-    private Panier(int id_panier) throws SQLException {
-        String query = "SELECT * FROM panier WHERE Id_panier = " + id_panier;
+    Panier(int id_panier) throws SQLException {
+        String query = "SELECT * FROM panier WHERE Id_panier = " + id_panier + " AND Date_fin IS NULL";
         try(Connection conn = Connect.getConnexion();
             Statement stmt = conn.createStatement();
             ResultSet res = stmt.executeQuery(query) ){
@@ -51,6 +50,44 @@ public class Panier {
         }
     }
 
+    //put an already existed panier into java
+    Panier(User user, Boolean haveValidPanier) throws SQLException {
+        if(haveValidPanier) {
+            String query = "SELECT * FROM panier WHERE Id_user = " + user.getId() + " AND Date_fin IS NULL";
+            try (Connection conn = Connect.getConnexion();
+                 Statement stmt = conn.createStatement();
+                 ResultSet res = stmt.executeQuery(query)) {
+                if (res.next()) {
+                    this.id = res.getInt("Id_panier");
+                    this.start_time = res.getString("Date_debut");
+                    this.end_time = res.getString("Date_fin");
+                    this.user = user;
+                }
+                while (res.next()) {
+                    Produit prod = Produit.findProduit(res.getInt("Id_produit"));
+                    int qte = res.getInt("qte_produit");
+                    produits.put(prod, qte);
+                }
+            }
+        }else{
+            System.out.println("Votre panier est vide ! ");
+            this.id = calculateID();
+            this.user = user;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Panier panier = (Panier) o;
+        return id == panier.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
+
     private static int calculateID () throws SQLException {
         String query = "SELECT MAX(Id_panier) FROM panier";
         ResultSet res = Connect.executeQuery(query);
@@ -59,8 +96,6 @@ public class Panier {
         }
         return 1;
     }
-
-
 
     public Map<Produit, Integer> getListProduit(){
         return this.produits;
@@ -79,6 +114,9 @@ public class Panier {
 //            String query = "INSERT INTO panier VALUES (" + this.id + ", " + prd.getId() + ", " + prd.getQteStocke() + ", '" + this.start_time + "' , NULL, " + user.getId() + ")";
 //            Connect.executeUpdate(query);
 //        }
+        if (produits.isEmpty()){
+            this.start_time = new String(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        }
         if(this.produits.containsKey(prd)) {
             int qte = this.produits.get(prd);
             this.produits.put(prd, qte + 1);
@@ -112,7 +150,6 @@ public class Panier {
     }
 
     public void removeProduit(int id_prd) throws SQLException{
-
         this.produits.remove(Produit.findProduit(id_prd));
         String query = "DELETE FROM Panier WHERE Id_produit = " + id_prd + " AND Id_panier = " + this.id + " AND Id_user = " + user.getId() + " AND Date_debut = '" + this.start_time + "' )";
         Connect.executeUpdate(query);
@@ -173,5 +210,31 @@ public class Panier {
         Connect.executeUpdate(str_association_table);
     }
 
+    // il faut ajouter le check on si le stockage est suffi
+    public void affichier(){
+        produits.entrySet().stream()
+                .forEach(entry ->
+                        System.out.println("Produit Id: " + entry.getKey().getId() + " Produit nom : " + entry.getKey().getName() + ", qte : " + entry.getValue()));
 
+    }
+
+    public void modifierPanier(int id_prd, int value) throws SQLException {
+        Produit prd = Produit.findProduit(id_prd);
+        if (this.produits.containsKey(prd)) {
+            this.produits.put(prd, value);
+            String query = "UPDATE Panier SET qte_produit = " + value +
+                    " WHERE Id_produit = " + prd.getId() +
+                    " AND Id_panier = " + this.id +
+                    " AND Id_user = " + user.getId();
+            Connect.executeUpdate(query);
+        } else {
+            System.out.println("Ce produit n'est pas dans le panier !");
+        }
+    }
+
+    public void annulerPanier() throws SQLException {
+        String query = "DELETE FROM Panier WHERE Id_user = " + user.getId() + " AND Date_debut = '" + this.start_time + "' )";
+        Connect.executeUpdate(query);
+        produits.clear();
+    }
 }

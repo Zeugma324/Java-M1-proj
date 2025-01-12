@@ -7,6 +7,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public class Produit implements Comparable<Produit> {
     private int id;
@@ -18,6 +19,7 @@ public class Produit implements Comparable<Produit> {
     private String main_category;
     private String sub_category;
 
+    Produit(){ }
 
     Produit(int idProduit) throws SQLException {
         String query = "SELECT * FROM produit P " +
@@ -181,6 +183,11 @@ public class Produit implements Comparable<Produit> {
         if (obj == null || getClass() != obj.getClass()) return false;
         Produit produit = (Produit) obj;
         return id == produit.id; // 两个 Produit 相等的条件是 id 相等
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getId());
     }
 }
 

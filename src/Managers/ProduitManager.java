@@ -85,22 +85,22 @@ public class ProduitManager {
 
     }
     public static Comparator selectComparator(){
-        Scanner sc = new Scanner(System.in);
 
         System.out.println("Choisissez un champ de tri (1.libelle, 2.rating, 3.price) :");
-        String trier = sc.nextLine();
+
+        String trier = System.console().readLine();
         if(!trier.equals("1") & !trier.equals("2") & !trier.equals("3")){
             System.out.println("Champ invalide");
             selectComparator();
         }
 
         System.out.println("Choisissez l'ordre de tri (1.ascending, 2.descending) :");
-        String order = sc.nextLine();
+        String order = System.console().readLine();
         if(!order.equals("1") & !order.equals("2") ){
             System.out.println("Champ invalide");
             selectComparator();
         }
-
+        System.out.println("------- il faut attenuate pour quelque seconds --------");
         Comparator<Produit> comparator = switch (trier) {
             case "1" -> Comparator.comparing(Produit::getName);
             case "2" -> Comparator.comparingDouble(Produit::getRating);

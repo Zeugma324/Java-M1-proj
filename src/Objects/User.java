@@ -1,8 +1,8 @@
 package Objects;
 
 import connexion.Connect;
-
 import java.sql.*;
+import java.util.Objects;
 
 public class User {
     private final int idUser;
@@ -10,6 +10,7 @@ public class User {
     private String name;
     private String tel;
     private String address;
+    private Panier panier;
 
     private User(int idUser) throws SQLException {
         this.idUser = idUser;
@@ -26,6 +27,19 @@ public class User {
         }
     }
 
+    public Panier getPanier() {
+        return panier;
+    }
+
+    private boolean haveValidPanier() throws SQLException {
+        return Connect.recordExists("SELECT * FROM panier WHERE id_user = " + idUser + " AND Date_fin IS NULL");
+    }
+
+    // UNFINI
+    public void connectPanier() throws SQLException {
+        panier = new Panier(this,haveValidPanier());
+    }
+
     public static User findUtilisateur(int idUser) throws SQLException {
         return new User(idUser);
     }
@@ -39,6 +53,7 @@ public class User {
 
     public static User createUtilisateur(String name, String lastname) throws SQLException {
         int idUser = addUserDB(name,lastname);
+        System.out.println("Votre id est = " + idUser);
         return new User(idUser);
     }
 
@@ -88,13 +103,23 @@ public class User {
                 '}';
     }
     public static void main(String[] args) throws SQLException {
-
-
         User user1 = User.createUtilisateur("Kaiyang","ZHANG");
 
         System.out.println(user1);
         user1.setAdress("30 Ave chocolat");
         user1.setTel("0612345678");
         System.out.println(user1);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return idUser == user.idUser;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(idUser);
     }
 }
