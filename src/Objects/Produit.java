@@ -5,9 +5,10 @@ import connexion.Connect;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
-public class Produit {
+public class Produit implements Comparable<Produit> {
     private int id;
     private String name;
     private double rating;
@@ -35,6 +36,21 @@ public class Produit {
                 this.main_category = res.getString("main_category");
                 this.sub_category = res.getString("sub_category");
             }
+        }
+    }
+
+    Produit(int idProduit, String name, double rating, int no_of_ratings, int discount_price, int actual_price, int category, int qteStocke) throws SQLException {
+        this.id = idProduit;
+        this.name = name;
+        this.rating = rating;
+        this.no_of_ratings = no_of_ratings;
+        this.discount_price = discount_price;
+        this.actual_price = actual_price;
+        String query = "SELECT main_category FROM categories WHERE Id_cat = " + category;
+        ResultSet res = Connect.executeQuery(query);
+        if (res.next()) {
+            this.main_category = res.getString("main_category");
+            this.sub_category = res.getString("sub_category");
         }
     }
 
@@ -154,6 +170,18 @@ public class Produit {
     }
 
 
+    @Override
+    public int compareTo(Produit o) {
+        return Integer.compare(this.id, o.id);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Produit produit = (Produit) obj;
+        return id == produit.id; // 两个 Produit 相等的条件是 id 相等
+    }
 }
 
 
