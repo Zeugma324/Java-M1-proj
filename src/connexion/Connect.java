@@ -1,4 +1,3 @@
-
 package connexion;
 
 import java.sql.*;
@@ -46,11 +45,14 @@ public class Connect {
 	}
 
 	public static boolean recordExists(String query) {
-		try (ResultSet rs = executeQuery(query)) {
+		try (Connection conn = getConnexion();
+			 Statement stm = conn.createStatement();
+			 ResultSet rs = stm.executeQuery(query)) {
 			return rs != null && rs.next();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			e.printStackTrace(); // 更好的处理方式是记录日志
 			return false;
 		}
 	}
+
 }

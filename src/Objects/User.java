@@ -14,13 +14,16 @@ public class User {
     private User(int idUser) throws SQLException {
         this.idUser = idUser;
         String query = "SELECT * FROM utilisateur WHERE id_user = " + idUser + ";";
-        ResultSet result = Connect.executeQuery(query);
+        try (Connection con = Connect.getConnexion();
+            Statement stm = con.createStatement();
+            ResultSet result = Connect.executeQuery(query);) {
             if (result.next()) {
                 name = result.getString("name");
                 lastname = result.getString("lastname");
                 address = result.getString("adress");
                 tel = result.getString("tel");
             }
+        }
     }
 
     public static User findUtilisateur(int idUser) throws SQLException {
@@ -28,54 +31,29 @@ public class User {
     }
 
     private static int addUserDB(String name, String lastname) throws SQLException {
-        int idUser = 0;
         String query = "INSERT INTO utilisateur (name, lastname) VALUES ('" + name + "', '" + lastname + "');";
-        try (Connection con = Connect.getConnexion();
-             PreparedStatement pstmt = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows == 0) {
-                throw new SQLException("Creating user failed, no rows affected.");
-            }
-            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    idUser = generatedKeys.getInt(1);
-                } else {
-                    throw new SQLException("Creating user failed, no ID obtained.");
-                }
-            }
-        }
+        int idUser = Connect.creationWithAutoIncrement(query);
         return idUser;
     }
 
 
-    public static User createUtilisateur(String name, String lastname) {
-        try {
-            int idUser = addUserDB(name,lastname);
-            return new User(idUser);
-        } catch (SQLException e) {
-            System.out.println("Failed to create user: " + e.getMessage());
-            return null;
-        }
+    public static User createUtilisateur(String name, String lastname) throws SQLException {
+        int idUser = addUserDB(name,lastname);
+        return new User(idUser);
     }
 
 
 
-    public void update( String key, String value){
+    public void update( String key, String value) throws SQLException {
         String query = "UPDATE utilisateur SET "+key+" = '"+value+"' WHERE id_user = "+ idUser;
-        try(Connection con = Connect.getConnexion();
-            Statement stm = con.createStatement()){
-            stm.executeUpdate(query);
-        }catch (SQLException e){
-            System.out.println("SQL Error");
-            e.printStackTrace();
-        }
+        Connect.executeUpdate(query);
     }
 
     public String getAdress() {
         return address;
     }
 
-    public void setAdress(String adress) {
+    public void setAdress(String adress) throws SQLException {
         this.address = adress;
         update("adress",adress);
     }
@@ -84,7 +62,7 @@ public class User {
         return tel;
     }
 
-    public void setTel(String tel) {
+    public void setTel(String tel) throws SQLException {
         this.tel = tel;
         update("tel",tel);
     }
