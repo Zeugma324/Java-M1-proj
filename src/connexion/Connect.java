@@ -1,11 +1,7 @@
 
 package connexion;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 public class Connect {
 
@@ -28,6 +24,25 @@ public class Connect {
 		Connection conn = Connect.getConnexion();
 		Statement stm = conn.createStatement();
 		stm.executeUpdate(query);
+	}
+
+	public static int creationWithAutoIncrement(String query) throws SQLException {
+		int id = -1;
+		try (Connection con = Connect.getConnexion();
+			 PreparedStatement pstmt = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+			int affectedRows = pstmt.executeUpdate();
+			if (affectedRows == 0) {
+				throw new SQLException("Creation failed, no rows affected.");
+			}
+			try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+				if (generatedKeys.next()) {
+					id = generatedKeys.getInt(1);
+				} else {
+					throw new SQLException("Creation failed, no ID obtained.");
+				}
+			}
+		}
+		return id;
 	}
 
 	public static boolean recordExists(String query) {
