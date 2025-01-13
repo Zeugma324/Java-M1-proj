@@ -1,6 +1,7 @@
 package Requets;
 
 import java.sql.*;
+import java.util.Scanner;
 
 public class USyihan {
     static String url = "jdbc:mysql://sql7.freesqldatabase.com:3306/sql7756463";
@@ -8,18 +9,16 @@ public class USyihan {
     static String mdp = "iFgwWVZFHW";
     // us0.2 recherche produits par mot-cle
     public static void rechercherProduitParMotCle(String motCle) {
+
         // SQL查询
-        String sql02 = "SELECT P.name FROM produit P WHERE P.name LIKE ?";
+        String sql02 = "SELECT P.name FROM produit P WHERE P.name LIKE '%' + motCle + '%'";
 
         // 使用 Connect 类来获取连接
         try (Connection con = DriverManager.getConnection(url, user, mdp);
-             PreparedStatement statement = con.prepareStatement(sql02)) {
-
-            // 设置参数 (模糊匹配)
-            statement.setString(1, "%" + motCle + "%");
+             Statement stm = con.createStatement();){
 
             // 执行查询
-            ResultSet resultSet = statement.executeQuery();
+            ResultSet resultSet = stm.executeQuery(sql02);
 
             // 输出结果
             System.out.println("Produits trouvés :");
@@ -35,6 +34,7 @@ public class USyihan {
 
     // us1.5 reprendre panier en cours
     public static void PanierEnCours(int userID){
+
         String sql15 = "SELECT id_panier, Date_debut FROM panier WHERE Id_user = ? AND Date_fin IS NULL";
 
         try (Connection con = DriverManager.getConnection(url, user, mdp);
@@ -63,8 +63,9 @@ public class USyihan {
     }
 
     //us3.3 修改产品库存、类别、客户的数据 editer les statistique sur produits，category...
-    //显示产品原始库存数量
+    //显示产品原始库存数量 affichier les QteStock Original
     public static void QteStock(int produitID){
+
         String sql = "SELECT Id_produit, quantity FROM stock WHERE Id_produit = ?";
 
         try (Connection connection = DriverManager.getConnection(url, user, mdp);
@@ -85,6 +86,7 @@ public class USyihan {
     }
     //修改产品库存数量
     public static void QteStockModifier(int produitID, int QteModifier){
+
         String sql = "UPDATE stock Set quantity = quantity + ? WHERE Id_produit = ?";
         try (Connection connection = DriverManager.getConnection(url, user, mdp);
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -130,6 +132,8 @@ public class USyihan {
         }
     //修改某类别产品的库存数量
     public static void ModifierStockParSubCat(int catID, int StockChange){
+
+
         String sql = "UPDATE stock JOIN produit on stock.Id_produit = produit.Id_produit Set quantity = quantity + ? WHERE category = ?";
         try (Connection connection = DriverManager.getConnection(url, user, mdp);
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -149,56 +153,90 @@ public class USyihan {
         }
     }
 
+//将下单次数超过五次的客户设置为VIP客户
+//Définir les clients qui commandent plus de cinq fois comme des clients VIP
+    public static void VIPCLients(){
+        String sql = "SELECT Id_user FROM panier JOIN PanierCommande ON panier.Id_panier = PanierCommande.panier_id GROUP by panier.Id_user HAVING COUNT(Id_commande) > 5";
 
+        try (Connection connection = DriverManager.getConnection(url, user, mdp);
+             PreparedStatement statement = connection.prepareStatement(sql)) {
 
+            ResultSet resultSet = statement.executeQuery();
+            System.out.println("Les clients suivants sont des VIP :");
 
+            while (resultSet.next()){
+                int userID = resultSet.getInt("Id_user");
+                System.out.println("userID");
 
-
-
-
-
-
-
-
-
-
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     public static void main(String[] args) {
-        // us0.1 Je veux rechercher un produit par mot-clé
-        String motCle = "Air";
-        rechercherProduitParMotCle(motCle);
-        // us1.5 Je veux reprendre un panier en cours afin de finaliser mes achats.
-        int userID = 1;
-        PanierEnCours(userID);
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            System.out.println("\n=== Menu ===");
+            System.out.println("1. Rechercher un produit par mot-clé");
+            System.out.println("2. Reprendre un panier en cours");
+            System.out.println("3. Afficher le stock d'un produit");
+            System.out.println("4. Modifier le stock d'un produit");
+            System.out.println("5. Afficher le stock d'une catégorie");
+            System.out.println("6. Modifier le stock d'une catégorie");
+            System.out.println("7. Afficher les clients VIP");
+            System.out.println("8. Exit");
+            System.out.print("Entrez votre choix : ");
 
-        //us3.3
-            //显示原始库存
-        int produitID = 1;
-        System.out.println("Original Stock : ");
-        QteStock(produitID);
-            //显示修改更新后的数据
-        int QteModifier = 5;
-        System.out.println("Apres modifier: ");
-        QteStockModifier(produitID, QteModifier);
-        QteStock(produitID);
-
-            //显示原始某子类产品的各种产品库存
-        int catID = 1;
-        System.out.println("Original Stock par category : ");
-        StockParSubCat(catID);
-
-            //显示修改更新后某子类产品的各种产品库存
-        int StockChange = 10;
-        ModifierStockParSubCat(catID, StockChange);
-        StockParSubCat(catID);
-
-
-
-
-
-
-
+            int choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> {
+                    System.out.print("Entrez le mot-clé : ");
+                    String motCle = scanner.next();
+                    rechercherProduitParMotCle(motCle);
+                }
+                case 2 -> {
+                    System.out.print("Entrez l'ID utilisateur : ");
+                    int userID = scanner.nextInt();
+                    PanierEnCours(userID);
+                }
+                case 3 -> {
+                    System.out.print("Entrez l'ID produit : ");
+                    int produitID = scanner.nextInt();
+                    QteStock(produitID);
+                }
+                case 4 -> {
+                    System.out.print("Entrez l'ID produit : ");
+                    int produitID = scanner.nextInt();
+                    System.out.print("Entrez le changement de quantité : ");
+                    int QteModifier = scanner.nextInt();
+                    QteStockModifier(produitID, QteModifier);
+                    QteStock(produitID); // 显示更新后的库存
+                }
+                case 5 -> {
+                    System.out.print("Entrez l'ID catégorie : ");
+                    int catID = scanner.nextInt();
+                    StockParSubCat(catID);
+                }
+                case 6 -> {
+                    System.out.print("Entrez l'ID catégorie : ");
+                    int catID = scanner.nextInt();
+                    System.out.print("Entrez le changement de quantité : ");
+                    int StockChange = scanner.nextInt();
+                    ModifierStockParSubCat(catID, StockChange);
+                    StockParSubCat(catID); // 显示更新后的库存
+                }
+                case 7 -> {
+                    VIPCLients();
+                }
+                case 8 -> {
+                    System.out.println("Exit l'application.");
+                    return;
+                }
+                default -> System.out.println("Choix invalide !");
+            }
+        }
 
 
     }
