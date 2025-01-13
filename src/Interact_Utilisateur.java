@@ -1,7 +1,7 @@
 import Managers.ProduitManager;
 import Objects.*;
-import BD_Connect.*;
 
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.*;
@@ -19,7 +19,6 @@ public class Interact_Utilisateur {
 
     // Unfini
     private static void mainMenu(User me) throws SQLException {
-        me.connectPanier();
         print("Quest-ce que vous voulez faire ?");
         print("1. Afficher les produits dans une categorie");
         print("2. Rechercher un produit");
@@ -30,7 +29,7 @@ public class Interact_Utilisateur {
         switch (choice) {
             case "1" -> afficherProduitsDansCategorie(me);
             case "2" -> rechercherProduit(me);
-            case "3" -> me.getPanier().afficher();
+            case "3" -> me.getPanier().affichier();
             case "4" -> historyPanier(me);
             case "5" -> System.exit(0);
             default -> mainMenu(me);
@@ -54,12 +53,12 @@ public class Interact_Utilisateur {
         mainMenu(me);
     }
 
-    private static void historyPanier(User me) throws SQLException {
-        ArrayList<Panier_old> paniers = me.HistoryPanier();
+    private static void historyPanier(User me) throws SQLException, NoSuchAlgorithmException {
+        ArrayList<Panier> paniers = me.HistoryPanier();
 
         IntStream.range(0, paniers.size())
                 .forEach(i -> {
-                    Panier_old panier = paniers.get(i);
+                    Panier panier = paniers.get(i);
                     System.out.println("Panier " + (i + 1) + ":");
                     panier.getListProduit().forEach((produit, quantite) -> {
                         System.out.println("    Produit Id: " + produit.getId() +
@@ -73,7 +72,7 @@ public class Interact_Utilisateur {
             if (choice < 0 || choice > paniers.size()) {
                 choice = demanderEntier("Wrong input, please try again ");
             } else {
-                Panier_old selectedPanier = paniers.get(choice - 1);
+                Panier selectedPanier = paniers.get(choice - 1);
                 selectedPanier.getListProduit().entrySet().stream()
                         .forEach(entry -> {
                             try {
@@ -116,7 +115,7 @@ public class Interact_Utilisateur {
 
     private static void menuPanier(User me) throws SQLException {
         me.connectPanier();
-        me.getPanier().afficher();
+        me.getPanier().affichier();
         print("Que voulez vous faire ?");
         print("1. Modifier le panier");
         print("2. Valider mon panier");
@@ -127,7 +126,7 @@ public class Interact_Utilisateur {
         switch (choice) {
             case "1" -> modifierPanier(me);
             case "2" -> me.getPanier().validate();
-            case "3" -> PanierDB.me.getPanier().annulerPanier();
+            case "3" -> me.getPanier().annulerPanier();
             case "4" -> mainMenu(me);
             case "5" -> System.exit(0);
             default -> menuPanier(me);
@@ -136,7 +135,7 @@ public class Interact_Utilisateur {
     }
 
     private static void modifierPanier(User me) throws SQLException {
-        me.getPanier().afficher();
+        me.getPanier().affichier();
         print("1. Je veux supprimer un produit");
         print("2. Je souhaite modifier la quantité d'articles");
         print("3. Retour au menu Panier");
