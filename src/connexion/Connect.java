@@ -28,6 +28,12 @@ public class Connect {
 		Statement stm = getConnexion().createStatement();
 		stm.executeUpdate(query);
 	}
+	
+	public static PreparedStatement executeQueryPrepared(String query) throws SQLException {
+		Connection conn = Connect.getConnexion();
+		PreparedStatement stm = conn.prepareStatement(query);
+		return stm;
+	}
 
 	public static int creationWithAutoIncrement(String query) throws SQLException {
 		int id = -1;
