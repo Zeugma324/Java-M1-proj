@@ -30,7 +30,7 @@ public class Interact_Utilisateur {
         switch (choice) {
             case "1" -> afficherProduitsDansCategorie(me);
             case "2" -> rechercherProduit(me);
-            case "3" -> me.getPanier().affichier();
+            case "3" -> me.getPanier().afficher();
             case "4" -> historyPanier(me);
             case "5" -> System.exit(0);
             default -> mainMenu(me);
@@ -116,7 +116,7 @@ public class Interact_Utilisateur {
 
     private static void menuPanier(User me) throws SQLException {
         me.connectPanier();
-        me.getPanier().affichier();
+        me.getPanier().afficher();
         print("Que voulez vous faire ?");
         print("1. Modifier le panier");
         print("2. Valider mon panier");
@@ -136,7 +136,7 @@ public class Interact_Utilisateur {
     }
 
     private static void modifierPanier(User me) throws SQLException {
-        me.getPanier().affichier();
+        me.getPanier().afficher();
         print("1. Je veux supprimer un produit");
         print("2. Je souhaite modifier la quantité d'articles");
         print("3. Retour au menu Panier");

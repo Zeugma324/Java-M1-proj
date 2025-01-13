@@ -85,6 +85,17 @@ public class Panier {
         this.isactive = isactive;
     }
 
+    public void afficher(){
+        System.out.println("User: "+ this.getUser().getLastname() + " " + this.getUser().getLastname());
+        System.out.println("Temp_Depart: " + this.start_time);
+        this.produits.entrySet().stream()
+                .forEach(entry ->{
+                    Produit prod = entry.getKey();
+                    int qte = entry.getValue();
+                    System.out.println(prod.getId() + ". Produit libelle : " + prod.getLibelle() + " Qte: " + qte);
+                });
+    }
+
     @Override
     public String toString() {
         return "Panier{" +
