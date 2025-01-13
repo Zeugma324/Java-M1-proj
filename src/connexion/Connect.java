@@ -9,19 +9,24 @@ public class Connect {
 	private static final String user = "sql7756463";
 	private static final String mdp = "iFgwWVZFHW";
 
+	private static Connection Connection;
+	
 	public static Connection getConnexion() throws SQLException {
-		return DriverManager.getConnection(url, user, mdp);
+		Connection = DriverManager.getConnection(url, user, mdp);
+		return Connection;
+	}
+
+	public static void closeConnexion() throws SQLException {
+		Connection.close();
 	}
 
 	public static ResultSet executeQuery(String query) throws SQLException {
-		Connection conn = Connect.getConnexion();
-		Statement stm = conn.createStatement();
+		Statement stm = getConnexion().createStatement();
 		return stm.executeQuery(query);
 	}
 
 	public static void executeUpdate(String query) throws SQLException {
-		Connection conn = Connect.getConnexion();
-		Statement stm = conn.createStatement();
+		Statement stm = getConnexion().createStatement();
 		stm.executeUpdate(query);
 	}
 	

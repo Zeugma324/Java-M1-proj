@@ -1,6 +1,7 @@
 import Managers.ProduitManager;
 import Objects.*;
 
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.*;
@@ -52,7 +53,7 @@ public class Interact_Utilisateur {
         mainMenu(me);
     }
 
-    private static void historyPanier(User me) throws SQLException {
+    private static void historyPanier(User me) throws SQLException, NoSuchAlgorithmException {
         ArrayList<Panier> paniers = me.HistoryPanier();
 
         IntStream.range(0, paniers.size())
