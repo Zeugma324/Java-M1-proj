@@ -126,7 +126,21 @@ public class USyihan {
         Connect.closeConnexion();
     }
 
+    //US3.2
+    // Temps moyen de réalisation d'un panier par un client
+    public static void AVGTempRealiserPanier() throws SQLException{
+        String sql = "SELECT AVG(TIMESTAMPDIFF(Day, Date_debut, Date_fin)) AS TempMoyenP FROM panier WHERE Date_fin IS NOT NULL";
 
+        ResultSet result = Connect.executeQuery(sql);
+
+        if (result.next()){
+            double AVGTempDays = result.getDouble("TempMoyenP");
+            System.out.println("temps moyen de réalisation d'un panier par un client : " + AVGTempDays + "jours");
+        } else {
+            System.out.println("Trouvez pas les paniers réalisés");
+        }
+        Connect.closeConnexion();
+    }
 
 
 
@@ -143,7 +157,8 @@ public class USyihan {
             System.out.println("5. Afficher le Qtestock des produits d'une catégorie");
             System.out.println("6. Modifier le Qtestock des produits d'une catégorie");
             System.out.println("7. Définir les users VIP");
-            System.out.println("8. Exit");
+            System.out.println("8. Temps moyen de réalisation d'un panier par un client");
+            System.out.println("9. Exit");
             System.out.print("Entrez votre choix : ");
 
             int choice = scanner.nextInt();
@@ -188,9 +203,13 @@ public class USyihan {
                     VIPusers();
                 }
                 case 8 -> {
+                    AVGTempRealiserPanier();
+                }
+                case 9 -> {
                     System.out.println("Exit l'application.");
                     return;
                 }
+
                 default -> System.out.println("Choix invalide !");
             }
         }
