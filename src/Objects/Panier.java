@@ -1,5 +1,6 @@
 package Objects;
 
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,7 +32,7 @@ public class Panier {
         String query = "INSERT INTO panier VALUES (" + this.id + ", " + idproduit + ", 1, '" + this.start_time + "' , NULL, " + user.getId() + ")";
     }
 
-    Panier(int id_panier) throws SQLException {
+    Panier(int id_panier) throws SQLException, NoSuchAlgorithmException {
         String query = "SELECT * FROM panier WHERE Id_panier = " + id_panier + " AND Date_fin IS NULL";
         try(Connection conn = Connect.getConnexion();
             Statement stmt = conn.createStatement();
@@ -40,7 +41,7 @@ public class Panier {
                 this.id = res.getInt("Id_panier");
                 this.start_time = res.getString("Date_debut");
                 this.end_time = res.getString("Date_fin");
-                this.user = User.findUtilisateur(res.getInt("Id_user"));
+                this.user = User.findUtilisateur(res.getString("email"), res.getString("mot_de_passe"));
                 isactive = false;
             }
             while(res.next()) {

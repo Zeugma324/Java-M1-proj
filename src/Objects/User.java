@@ -4,136 +4,148 @@ import connexion.Connect;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 public class User {
-    private final int idUser;
-    private String lastname;
-    private String name;
-    private String tel;
-    private String address;
-    private Panier panier;
+	private int idUser;
+	private String lastname;
+	private String name;
+	private String tel;
+	private String address;
+	private Panier panier;
+	private String email;
+	private String mdp;
 
-    private User(int idUser) throws SQLException {
-        this.idUser = idUser;
-        String query = "SELECT * FROM utilisateur WHERE id_user = " + idUser + ";";
-        try (Connection con = Connect.getConnexion();
-            Statement stm = con.createStatement();
-            ResultSet result = Connect.executeQuery(query);) {
-            if (result.next()) {
-                name = result.getString("name");
-                lastname = result.getString("lastname");
-                address = result.getString("adress");
-                tel = result.getString("tel");
-            }
-        }
-    }
+	private User(String email, String mdp) throws SQLException, NoSuchAlgorithmException {
+		this.email = email;
+		this.mdp = hash(mdp);
+		String query = "SELECT * FROM utilisateur WHERE email = ? AND mot_de_passe = ? ;";
 
-    public Panier getPanier() {
-        return panier;
-    }
+		PreparedStatement ps = Connect.executeQueryPrepared(query);
+		ps.setString(1, this.email);
+		ps.setString(2, this.mdp);
+		ResultSet res = ps.executeQuery();
+		if (res.next()) {
+			name = res.getString("name");
+			lastname = res.getString("lastname");
+			address = res.getString("adress");
+			tel = res.getString("tel");
+		}
+	}
 
-    private boolean haveValidPanier() throws SQLException {
-        return Connect.recordExists("SELECT * FROM panier WHERE id_user = " + idUser + " AND Date_fin IS NULL");
-    }
+	public Panier getPanier() {
+		return panier;
+	}
 
-    // UNFINI
-    public void connectPanier() throws SQLException {
-        panier = new Panier(this,haveValidPanier());
-    }
+	private boolean haveValidPanier() throws SQLException {
+		return Connect.recordExists("SELECT * FROM panier WHERE id_user = " + idUser + " AND Date_fin IS NULL");
+	}
 
-    public static User findUtilisateur(int idUser) throws SQLException {
-        return new User(idUser);
-    }
+	// UNFINI
+	public void connectPanier() throws SQLException {
+		panier = new Panier(this,haveValidPanier());
+	}
 
-    private static int addUserDB(String name, String lastname) throws SQLException {
-        String query = "INSERT INTO utilisateur (name, lastname) VALUES ('" + name + "', '" + lastname + "');";
-        int idUser = Connect.creationWithAutoIncrement(query);
-        return idUser;
-    }
+	public static User findUtilisateur(String email, String mdp) throws SQLException, NoSuchAlgorithmException {
+		return new User(email, mdp);
+	}
 
-
-    public static User createUtilisateur(String name, String lastname) throws SQLException {
-        int idUser = addUserDB(name,lastname);
-        System.out.println("Votre id est = " + idUser);
-        return new User(idUser);
-    }
+	private static int addUserDB(String email, String mdp, String lastname, String name) throws SQLException, NoSuchAlgorithmException {
+		String query = "INSERT INTO utilisateur (email, mot_de_passe, lastname, name) VALUES ('" + email + "', '" + hash(mdp) + "','" + lastname + "','" + name + "');";
+		int idUser = Connect.creationWithAutoIncrement(query);
+		return idUser;
+	}
 
 
-    public void update( String key, String value) throws SQLException {
-        String query = "UPDATE utilisateur SET "+key+" = '"+value+"' WHERE id_user = "+ idUser;
-        Connect.executeUpdate(query);
-    }
+	public static User createUtilisateur(String email, String mdp,String lastname,String name) throws SQLException, NoSuchAlgorithmException {
+		int idUser = addUserDB(email,mdp, lastname, name);
+		System.out.println("Votre id est = " + idUser);
+		return new User(email, mdp);
+	}
 
-    public String getAdress() {
-        return address;
-    }
 
-    public void setAdress(String adress) throws SQLException {
-        this.address = adress;
-        update("adress",adress);
-    }
+	public void update( String key, String value) throws SQLException {
+		String query = "UPDATE utilisateur SET "+key+" = '"+value+"' WHERE id_user = "+ idUser;
+		Connect.executeUpdate(query);
+	}
 
-    public String getTel() {
-        return tel;
-    }
+	public String getAdress() {
+		return address;
+	}
 
-    public void setTel(String tel) throws SQLException {
-        this.tel = tel;
-        update("tel",tel);
-    }
+	public void setAdress(String adress) throws SQLException {
+		this.address = adress;
+		update("adress",adress);
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getTel() {
+		return tel;
+	}
 
-    public String getLastname() {
-        return lastname;
-    }
+	public void setTel(String tel) throws SQLException {
+		this.tel = tel;
+		update("tel",tel);
+	}
 
-    public int getId() {
-        return idUser;
-    }
+	public String getName() {
+		return name;
+	}
 
-    @Override
-    public String toString() {
-        return "User{" +
-                "idUser=" + idUser +
-                ", name='" + name + '\'' +
-                ", lastname='" + lastname + '\'' +
-                '}';
-    }
-    public static void main(String[] args) throws SQLException {
-        User user1 = User.createUtilisateur("Kaiyang","ZHANG");
+	public String getLastname() {
+		return lastname;
+	}
 
-        System.out.println(user1);
-        user1.setAdress("30 Ave chocolat");
-        user1.setTel("0612345678");
-        System.out.println(user1);
-    }
+	public int getId() {
+		return idUser;
+	}
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return idUser == user.idUser;
-    }
+	@Override
+	public String toString() {
+		return "User{" +
+				"idUser=" + idUser +
+				", name='" + name + '\'' +
+				", lastname='" + lastname + '\'' +
+				'}';
+	}
+	public static void main(String[] args) throws SQLException, NoSuchAlgorithmException {
+		User user1 = User.createUtilisateur("Kaiyang@gmail.com","Kaiyang", "Kaiyang" , "test");
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(idUser);
-    }
+		System.out.println(user1);
+		user1.setAdress("30 Ave chocolat");
+		user1.setTel("0612345678");
+		System.out.println(user1);
+	}
 
-    public ArrayList<Panier> HistoryPanier() throws SQLException {
-        ArrayList<Panier> panierList = new ArrayList<>();
-        String query = "SELECT * FROM panier WHERE Id_user = " + idUser + " AND Date_fin IS NOT NULL";
-        try (Connection con = Connect.getConnexion();
-             Statement stm = con.createStatement();
-             ResultSet result = stm.executeQuery(query);) {
-            while (result.next()) {
-                panierList.add(new Panier(result.getInt("Id_panier")));
-            }
-        }
-        return panierList;
-    }
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || getClass() != o.getClass()) return false;
+		User user = (User) o;
+		return idUser == user.idUser;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(idUser);
+	}
+
+	public ArrayList<Panier> HistoryPanier() throws SQLException, NoSuchAlgorithmException {
+		ArrayList<Panier> panierList = new ArrayList<>();
+		String query = "SELECT * FROM panier WHERE Id_user = " + idUser + " AND Date_fin IS NOT NULL";
+		try (Connection con = Connect.getConnexion();
+				Statement stm = con.createStatement();
+				ResultSet result = stm.executeQuery(query);) {
+			while (result.next()) {
+				panierList.add(new Panier(result.getInt("Id_panier")));
+			}
+		}
+		return panierList;
+	}
+
+	private static String hash (String a) throws NoSuchAlgorithmException {
+		byte[] hash = MessageDigest.getInstance("SHA-256").digest(a.getBytes());
+		return HexFormat.of().formatHex(hash);
+	}
 
 }
