@@ -4,163 +4,71 @@ package Objects;
 import connexion.Connect;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import BD_Connect.ProduitBD;
+
+import static BD_Connect.ProduitBD.id_catAndCat;
+import static BD_Connect.ProduitBD.subCatAndMainCat;
 
 public class Produit implements Comparable<Produit> {
     private int id;
-    private String name;
+    private String libelle;
     private double rating;
     private int no_of_ratings;
     private int discount_price;
     private int actual_price;
-    private String main_category;
     private String sub_category;
+    private String main_category;
 
-    Produit(){ }
 
-    Produit(int idProduit) throws SQLException {
-        String query = "SELECT * FROM produit P " +
-                "JOIN categories C ON P.category = C.Id_cat " +
-                "WHERE P.id_produit = " + idProduit;
 
-        ResultSet res = Connect.executeQuery(query);
-        if (res.next()) {
-            this.id = idProduit;
-            this.name = res.getString("name");
-            this.rating = res.getDouble("ratings");
-            this.no_of_ratings = res.getInt("no_of_ratings");
-            this.discount_price = res.getInt("discount_price");
-            this.actual_price = res.getInt("actual_price");
-            this.main_category = res.getString("main_category");
-            this.sub_category = res.getString("sub_category");
-        }
-        Connect.closeConnexion();
-    }
+    public Produit(){ }
 
-    Produit(int idProduit, String name, double rating, int no_of_ratings, int discount_price, int actual_price, int category, int qteStocke) throws SQLException {
-        this.id = idProduit;
-        this.name = name;
+    public Produit(int id, String libelle, double rating, int no_of_ratings, int discount_price, int actual_price, int category) {
+        this.id = id;
+        this.libelle = libelle;
         this.rating = rating;
         this.no_of_ratings = no_of_ratings;
         this.discount_price = discount_price;
         this.actual_price = actual_price;
-        String query = "SELECT main_category FROM categories WHERE Id_cat = " + category;
-        ResultSet res = Connect.executeQuery(query);
-        if (res.next()) {
-            this.main_category = res.getString("main_category");
-            this.sub_category = res.getString("sub_category");
-        }
+        this.sub_category = id_catAndCat.get(category);
+        this.main_category = subCatAndMainCat.get(this.sub_category);
     }
 
+    public int getId() { return this.id; }
+    public String getLibelle() { return this.libelle; }
+    public double getRating() { return this.rating; }
+    public int getNo_of_ratings() { return this.no_of_ratings; }
+    public int getDiscount_price() { return this.discount_price; }
+    public int getActual_price() { return this.actual_price; }
+    public String getMain_category() { return this.main_category; }
+    public String getSub_category() { return this.sub_category; }
 
-    private void update( String key, String value) throws SQLException {
-        String query = "UPDATE produit SET "+key+" = '"+value+"' WHERE id_produit = "+ id;
-        Connect.executeUpdate(query);
+    public void setId(int id) { this.id = id; }
+    public void setLibelle(String libelle) { this.libelle = libelle; }
+    public void setRating(double rating) { this.rating = rating; }
+    public void setNo_of_ratings(int no_of_ratings) { this.no_of_ratings = no_of_ratings; }
+    public void setDiscount_price(int discount_price) { this.discount_price = discount_price; }
+    public void setActual_price(int actual_price) { this.actual_price = actual_price; }
+    public void setMain_category(String main_category) { this.main_category = main_category; }
+    public void setSub_category(String sub_category) { this.sub_category = sub_category; }
+
+    public static void afficherCategories(){
+        id_catAndCat.entrySet().stream()
+                .forEach(entry ->{
+                    int id = entry.getKey();
+                    String sub_category = entry.getValue();
+                    String main_category = subCatAndMainCat.get(sub_category);
+                    System.out.println("Id : " + id + " - Sub-category : " + sub_category + " - Main-category : " + main_category);
+                });
     }
 
-    private void update( String key, int value) throws SQLException {
-        String query = "UPDATE produit SET "+key+" = '"+value+"' WHERE id_produit = "+ id;
-        Connect.executeUpdate(query);
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    private void setName(String name) throws SQLException {
-        this.name = name;
-        update("name",name);
-    }
-
-    public double getRating() {
-        return rating;
-    }
-
-    public int getNo_of_ratings() {
-        return no_of_ratings;
-    }
-
-    public int getDiscount_price() {
-        return discount_price;
-    }
-
-    private void setDiscount_price(int discount_price) throws SQLException {
-        this.discount_price = discount_price;
-        update("discount_price", discount_price);
-    }
-
-    public int getActual_price() {
-        return actual_price;
-    }
-
-    private void setActual_price(int actual_price) throws SQLException {
-        this.actual_price = actual_price;
-        update("actual_price", actual_price);
-    }
-
-    public String getMain_category() {
-        return main_category;
-    }
-
-    public String getSub_category() {
-        return sub_category;
-    }
-
-    private void setSub_category(String sub_category) throws SQLException {
-        this.sub_category = sub_category;
-        String id_cat = "SELECT Id_cat FROM categories WHERE sub_category = '" + sub_category + "'";
-        String query = "UPDATE produit SET category = (" + id_cat + ") WHERE id_produit = " + id;
-        Connect.executeUpdate(query);
-
-        String query2 = "SELECT main_category FROM categories WHERE sub_category = '" + sub_category + "'";
-        ResultSet res = Connect.executeQuery(query2);
-        if (res.next()) {
-            this.main_category = res.getString("main_category");
-        }
-    }
-
-    public static Produit findProduit(int idProduit) throws SQLException {
-        return new Produit(idProduit);
-    }
-
-    private static int findIdCat(String sub_category) throws SQLException {
-        String query = "SELECT Id_cat FROM categories WHERE sub_category = '" + sub_category + "'";
-        ResultSet res = Connect.executeQuery(query);
-        if (res.next()) {
-            return res.getInt("Id_cat");
-        }
-        return -1;
-    }
-
-    private static int addProduitDb(String name, double rating, int no_of_ratings, int discount_price, int actual_price, String sub_category) throws SQLException {
-        int Id_cat = findIdCat(sub_category);
-        if(Id_cat != -1) {
-            String query = "INSERT INTO produit (name, ratings, no_of_ratings, discount_price, actual_price, category) " +
-                    "VALUES ('" + name + "', " + rating + ", " + no_of_ratings + ", " + discount_price + ", " + actual_price + ", " + Id_cat + ")";
-            return Connect.creationWithAutoIncrement(query);
-        }
-        return -1;
-    }
-
-
-
-    public static Produit createProduit(int Id_produit, String name, double rating, int no_of_ratings, int discount_price, int actual_price, String sub_category ) throws SQLException {
-         int id = addProduitDb(name,rating,no_of_ratings,discount_price,actual_price,sub_category);
-         return new Produit(id);
-    }
 
     @Override
     public String toString() {
         return "Produit{" +
                 "id=" + id +
-                ", name='" + name + '\'' +
+                ", lebelle='" + libelle + '\'' +
                 ", rating=" + rating +
                 ", no_of_ratings=" + no_of_ratings +
                 ", discount_price=" + discount_price +
@@ -169,21 +77,6 @@ public class Produit implements Comparable<Produit> {
                 ", sub_category='" + sub_category + '\'' +
                 '}';
     }
-
-    public static void printAllCategories() throws SQLException {
-        String query = "SELECT DISTINCT c.Id_cat, c.main_category, c.sub_category " +
-                "FROM categories c " +
-                "JOIN produit p ON p.category = c.Id_cat";
-        ResultSet result = Connect.executeQuery(query);
-
-        System.out.println("Liste des catégories disponibles :");
-        while (result.next()) {
-            System.out.println("ID Catégorie: " + result.getInt("Id_cat") +
-                    ", Main Category: " + result.getString("main_category") +
-                    ", Sub Category: " + result.getString("sub_category"));
-        }
-    }
-
 
     @Override
     public int compareTo(Produit o) {

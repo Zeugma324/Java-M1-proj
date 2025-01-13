@@ -1,5 +1,6 @@
 import Managers.ProduitManager;
 import Objects.*;
+import BD_Connect.*;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -126,7 +127,7 @@ public class Interact_Utilisateur {
         switch (choice) {
             case "1" -> modifierPanier(me);
             case "2" -> me.getPanier().validate();
-            case "3" -> me.getPanier().annulerPanier();
+            case "3" -> PanierDB.me.getPanier().annulerPanier();
             case "4" -> mainMenu(me);
             case "5" -> System.exit(0);
             default -> menuPanier(me);

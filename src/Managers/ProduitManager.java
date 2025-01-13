@@ -1,6 +1,8 @@
 package Managers;
 
 import java.util.*;
+
+import BD_Connect.ProduitBD;
 import Objects.*;
 import static Objects.Produit.*;
 import connexion.Connect;
@@ -16,8 +18,8 @@ public class ProduitManager {
     // US 0.1 Je veux visualiser les détails d'un produit
     // US 0.1 : Visualiser les détails d'un produit
     public static void visualiserProduit(int idProd) throws SQLException {
-        Produit prod1 = findProduit(idProd);
-        System.out.println(prod1);
+        Produit prod = ProduitBD.loadProduit(idProd);
+        System.out.println(prod);
     }
 
     // US 0.2 Je veux rechercher un produit par mot-clé.
@@ -32,11 +34,12 @@ public class ProduitManager {
         ArrayList<Produit> produits = new ArrayList<>();
         System.out.println("Produits trouvés pour le mot-clé : " + keyword);
         while (result.next()) {
-            produits.add(findProduit(result.getInt("id_produit")));
+            produits.add(ProduitBD.loadProduit(result.getInt("id_produit")));
         }
         produits.stream()
                 .sorted(selectComparator())
                 .forEach(produit -> System.out.println(produit));
+        Connect.closeConnexion();
     }
 
     // US 0.3 : Consulter les produits par catégorie
@@ -52,39 +55,40 @@ public class ProduitManager {
         ids.stream()
                 .map(id -> {
                     try {
-                        return findProduit(id);
+                        return ProduitBD.loadProduit(id);
                     } catch (SQLException e) {
                         throw new RuntimeException(e);
                     }
                 })
                 .filter(produit -> produit != null)
+                .sorted(selectComparator())
                 .forEach(System.out::println);
     }
 
-    //US 0.4 - Trier un produit par quelque chose
-    public static void trierProduits(int idCat) throws SQLException {
-        String query = "SELECT produit.id_produit " +
-                "FROM produit " +
-                "JOIN categories ON produit.category = categories.Id_cat " +
-                "WHERE categories.Id_cat = " + idCat ;
-        ResultSet result = Connect.executeQuery(query);
-        ArrayList<Integer> ids = new ArrayList<>();
-        while(result.next()) {
-            ids.add(result.getInt("id_produit"));
-        }
-
-        ids.stream()
-                .map(id -> {
-                    try {
-                        return findProduit(id);
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .sorted(selectComparator())
-                .forEach(produit -> System.out.println(produit));
-
-    }
+//    //US 0.4 - Trier un produit par quelque chose
+//    public static void trierProduits(int idCat) throws SQLException {
+//        String query = "SELECT produit.id_produit " +
+//                "FROM produit " +
+//                "JOIN categories ON produit.category = categories.Id_cat " +
+//                "WHERE categories.Id_cat = " + idCat ;
+//        ResultSet result = Connect.executeQuery(query);
+//        ArrayList<Integer> ids = new ArrayList<>();
+//        while(result.next()) {
+//            ids.add(result.getInt("id_produit"));
+//        }
+//
+//        ids.stream()
+//                .map(id -> {
+//                    try {
+//                        return findProduit(id);
+//                    } catch (SQLException e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                })
+//                .sorted(selectComparator())
+//                .forEach(produit -> System.out.println(produit));
+//
+//    }
     public static Comparator selectComparator(){
 
         System.out.println("Choisissez un champ de tri (1.libelle, 2.rating, 3.price) :");
@@ -103,7 +107,7 @@ public class ProduitManager {
         }
         System.out.println("------- il faut attenuate pour quelque seconds --------");
         Comparator<Produit> comparator = switch (trier) {
-            case "1" -> Comparator.comparing(Produit::getName);
+            case "1" -> Comparator.comparing(Produit::getLibelle);
             case "2" -> Comparator.comparingDouble(Produit::getRating);
             case "3" -> Comparator.comparingInt(Produit::getDiscount_price);
             default -> Comparator.comparingDouble(Produit::getRating);

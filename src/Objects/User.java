@@ -1,5 +1,6 @@
 package Objects;
 
+import BD_Connect.PanierBD;
 import connexion.Connect;
 import java.sql.*;
 import java.util.ArrayList;
@@ -43,9 +44,8 @@ public class User {
 		return Connect.recordExists("SELECT * FROM panier WHERE id_user = " + idUser + " AND Date_fin IS NULL");
 	}
 
-	// UNFINI
 	public void connectPanier() throws SQLException {
-		panier = new Panier(this,haveValidPanier());
+		panier = PanierBD.loadPanierByUser(this);
 	}
 
 	public static User findUtilisateur(String email, String mdp) throws SQLException, NoSuchAlgorithmException {
@@ -130,18 +130,18 @@ public class User {
 		return Objects.hashCode(idUser);
 	}
 
-	public ArrayList<Panier> HistoryPanier() throws SQLException, NoSuchAlgorithmException {
-		ArrayList<Panier> panierList = new ArrayList<>();
-		String query = "SELECT * FROM panier WHERE Id_user = " + idUser + " AND Date_fin IS NOT NULL";
-		try (Connection con = Connect.getConnexion();
-				Statement stm = con.createStatement();
-				ResultSet result = stm.executeQuery(query);) {
-			while (result.next()) {
-				panierList.add(new Panier(result.getInt("Id_panier")));
-			}
-		}
-		return panierList;
-	}
+//	public ArrayList<Panier> HistoryPanier() throws SQLException, NoSuchAlgorithmException {
+//		ArrayList<Panier> panierList = new ArrayList<>();
+//		String query = "SELECT * FROM panier WHERE Id_user = " + idUser + " AND Date_fin IS NOT NULL";
+//		try (Connection con = Connect.getConnexion();
+//				Statement stm = con.createStatement();
+//				ResultSet result = stm.executeQuery(query);) {
+//			while (result.next()) {
+//				panierList.add(new Panier(result.getInt("Id_panier")));
+//			}
+//		}
+//		return panierList;
+//	}
 
 	private static String hash (String a) throws NoSuchAlgorithmException {
 		byte[] hash = MessageDigest.getInstance("SHA-256").digest(a.getBytes());

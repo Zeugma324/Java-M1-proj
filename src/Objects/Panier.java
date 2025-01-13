@@ -21,13 +21,14 @@ public class Panier {
         this.start_time = start_time;
     }
 
-    Panier(int id, User user) {
+
+    public Panier(int id, User user) {
         this.id = id;
         this.user = user;
         this.start_time = new String(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
     }
 
-    Panier(int id, Map<Produit, Integer> produits, String start_time, String end_time, User user) {
+    public Panier(int id, Map<Produit, Integer> produits, String start_time, String end_time, User user) {
         this.id = id;
         this.produits = produits;
         this.start_time = start_time;
