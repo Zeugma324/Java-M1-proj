@@ -84,4 +84,16 @@ public class Panier {
     public void setActive(boolean isactive) {
         this.isactive = isactive;
     }
+
+    @Override
+    public String toString() {
+        return "Panier{" +
+                "id=" + id +
+                ", produits=" + produits +
+                ", start_time='" + start_time + '\'' +
+                ", user=" + user +
+                ", end_time='" + end_time + '\'' +
+                ", isactive=" + isactive +
+                '}';
+    }
 }

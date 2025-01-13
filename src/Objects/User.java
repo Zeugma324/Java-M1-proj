@@ -130,18 +130,18 @@ public class User {
 		return Objects.hashCode(idUser);
 	}
 
-//	public ArrayList<Panier> HistoryPanier() throws SQLException, NoSuchAlgorithmException {
-//		ArrayList<Panier> panierList = new ArrayList<>();
-//		String query = "SELECT * FROM panier WHERE Id_user = " + idUser + " AND Date_fin IS NOT NULL";
-//		try (Connection con = Connect.getConnexion();
-//				Statement stm = con.createStatement();
-//				ResultSet result = stm.executeQuery(query);) {
-//			while (result.next()) {
-//				panierList.add(new Panier(result.getInt("Id_panier")));
-//			}
-//		}
-//		return panierList;
-//	}
+	public ArrayList<Panier> HistoryPanier() throws SQLException, NoSuchAlgorithmException {
+		ArrayList<Panier> panierList = new ArrayList<>();
+		String query = "SELECT * FROM panier WHERE Id_user = " + idUser + " AND Date_fin IS NOT NULL";
+		try (Connection con = Connect.getConnexion();
+				Statement stm = con.createStatement();
+				ResultSet result = stm.executeQuery(query);) {
+			while (result.next()) {
+				panierList.add(PanierBD.loadPanierByUser(this));
+			}
+		}
+		return panierList;
+	}
 
 	private static String hash (String a) throws NoSuchAlgorithmException {
 		byte[] hash = MessageDigest.getInstance("SHA-256").digest(a.getBytes());

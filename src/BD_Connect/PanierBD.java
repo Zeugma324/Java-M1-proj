@@ -4,7 +4,6 @@ package BD_Connect;
 import Objects.*;
 import connexion.Connect;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -43,7 +42,7 @@ public class PanierBD {
         return 1;
     }
 
-    public void addProduitToPanier(Panier panier, Produit prod, int quantity) throws SQLException {
+    public static void addProduitToPanier(Panier panier, Produit prod, int quantity) throws SQLException {
         if (panier.getListProduit().isEmpty()) {
             panier.setStartTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         }
@@ -67,7 +66,7 @@ public class PanierBD {
         }
     }
 
-    public void removeProduitFromPanier(Panier panier, Produit prd) throws SQLException {
+    public static void removeProduitFromPanier(Panier panier, Produit prd) throws SQLException {
         panier.getListProduit().remove(prd);
         String query = "DELETE FROM Panier WHERE Id_produit = " + prd.getId() + " AND Id_panier = " + panier.getId() + " AND Id_user = " + panier.getUser().getId() + " AND Date_debut = '" + panier.getStartTime() + "' )";
         Connect.executeUpdate(query);
