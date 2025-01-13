@@ -2,6 +2,7 @@ package Objects;
 
 import connexion.Connect;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class User {
@@ -56,7 +57,6 @@ public class User {
         System.out.println("Votre id est = " + idUser);
         return new User(idUser);
     }
-
 
 
     public void update( String key, String value) throws SQLException {
@@ -122,4 +122,18 @@ public class User {
     public int hashCode() {
         return Objects.hashCode(idUser);
     }
+
+    public ArrayList<Panier> HistoryPanier() throws SQLException {
+        ArrayList<Panier> panierList = new ArrayList<>();
+        String query = "SELECT * FROM panier WHERE Id_user = " + idUser + " AND Date_fin IS NOT NULL";
+        try (Connection con = Connect.getConnexion();
+             Statement stm = con.createStatement();
+             ResultSet result = stm.executeQuery(query);) {
+            while (result.next()) {
+                panierList.add(new Panier(result.getInt("Id_panier")));
+            }
+        }
+        return panierList;
+    }
+
 }

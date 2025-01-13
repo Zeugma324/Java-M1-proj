@@ -41,6 +41,7 @@ public class Panier {
                 this.start_time = res.getString("Date_debut");
                 this.end_time = res.getString("Date_fin");
                 this.user = User.findUtilisateur(res.getInt("Id_user"));
+                isactive = false;
             }
             while(res.next()) {
                 Produit prod = Produit.findProduit(res.getInt("Id_produit"));
@@ -49,7 +50,19 @@ public class Panier {
             }
         }
     }
+    public void addPreviousPanier(Panier oldPanier) throws SQLException {
+        for(Map.Entry<Produit, Integer> entry : oldPanier.getListProduit().entrySet()) {
+            Produit prod = entry.getKey();
+            int qte = entry.getValue();
+            if(this.produits.containsKey(prod)) {
+                int qte_old = this.produits.get(prod);
+                this.produits.put(prod, qte_old + qte);
+            }else{
+                this.produits.put(prod, qte);
+            }
+        }
 
+    }
     //put an already existed panier into java
     Panier(User user, Boolean haveValidPanier) throws SQLException {
         if(haveValidPanier) {
@@ -129,6 +142,31 @@ public class Panier {
             Connect.executeUpdate(query);
         }
     }
+
+    public void addProduit(Produit prd, int qte_new) throws SQLException {
+        if (produits.isEmpty()) {
+            this.start_time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        }
+
+        if (produits.containsKey(prd)) {
+            int currentQuantity = produits.get(prd);
+            int updatedQuantity = currentQuantity + qte_new;
+            produits.put(prd, updatedQuantity);
+
+            String query = "UPDATE Panier SET qte_produit = " + updatedQuantity +
+                    " WHERE Id_panier = " + this.id +
+                    " AND Id_produit = " + prd.getId() +
+                    " AND Id_user = " + user.getId();
+            Connect.executeUpdate(query);
+        } else {
+            produits.put(prd, qte_new);
+
+            String query = "INSERT INTO Panier (Id_panier, Id_produit, qte_produit, Date_debut, Date_fin, Id_user) " +
+                    "VALUES (" + this.id + ", " + prd.getId() + ", " + qte_new + ", '" + this.start_time + "', NULL, " + user.getId() + ")";
+            Connect.executeUpdate(query);
+        }
+    }
+
 
     public void minusProduit(int id_prd) throws SQLException {
         Produit prd = Produit.findProduit(id_prd);

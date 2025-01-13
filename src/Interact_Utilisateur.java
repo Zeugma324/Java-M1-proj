@@ -1,8 +1,10 @@
 import Managers.ProduitManager;
-import Objects.Produit;
-import Objects.User;
+import Objects.*;
 
 import java.sql.SQLException;
+import java.util.*;
+import java.util.stream.*;
+
 
 import static Objects.User.*;
 
@@ -20,16 +22,53 @@ public class Interact_Utilisateur {
         print("1. Afficher les produits dans une categorie");
         print("2. Rechercher un produit");
         print("3. Afficher mon panier");
+        print("4. Regarde a mon previous panier");
         print("4. Quitter");
         String choice = readLine();
         switch (choice) {
             case "1" -> menuPanier(me);
             case "2" -> rechercherProduit(me);
             case "3" -> me.getPanier().affichier();
-            case "4" -> System.exit(0);
+            case "4" -> historyPanier(me);
+            case "5" -> System.exit(0);
             default -> mainMenu(me);
         }
     }
+
+    private static void historyPanier(User me) throws SQLException {
+        ArrayList<Panier> paniers = me.HistoryPanier();
+
+        IntStream.range(0, paniers.size())
+                .forEach(i -> {
+                    Panier panier = paniers.get(i);
+                    System.out.println("Panier " + (i + 1) + ":");
+                    panier.getListProduit().forEach((produit, quantite) -> {
+                        System.out.println("    Produit Id: " + produit.getId() +
+                                ", Produit nom : " + produit.getName() +
+                                ", qte : " + quantite);
+                    });
+                });
+
+        int choice = demanderEntier("Voulez-vous répondre au panier? Entrez le numéro du panier et appuyez sur 0 pour revenir. ");
+        while (choice != 0) {
+            if (choice < 0 || choice > paniers.size()) {
+                choice = demanderEntier("Wrong input, please try again ");
+            } else {
+                Panier selectedPanier = paniers.get(choice - 1);
+                selectedPanier.getListProduit().entrySet().stream()
+                        .forEach(entry -> {
+                            try {
+                                me.getPanier().addProduit(entry.getKey(), entry.getValue());
+                            } catch (SQLException e) {
+                                e.getMessage();
+                            }
+                        });
+            }
+        }
+        mainMenu(me);
+
+    }
+
 
     private static void rechercherProduit(User me) throws SQLException {
         String req = readLine("Quel-ce que vous voulez rechercher ?");
