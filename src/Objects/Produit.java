@@ -25,20 +25,19 @@ public class Produit implements Comparable<Produit> {
         String query = "SELECT * FROM produit P " +
                 "JOIN categories C ON P.category = C.Id_cat " +
                 "WHERE P.id_produit = " + idProduit;
-        try (Connection conn = Connect.getConnexion();
-             Statement stmt = conn.createStatement();
-             ResultSet res = stmt.executeQuery(query)) {
-            if (res.next()) {
-                this.id = idProduit;
-                this.name = res.getString("name");
-                this.rating = res.getDouble("ratings");
-                this.no_of_ratings = res.getInt("no_of_ratings");
-                this.discount_price = res.getInt("discount_price");
-                this.actual_price = res.getInt("actual_price");
-                this.main_category = res.getString("main_category");
-                this.sub_category = res.getString("sub_category");
-            }
+
+        ResultSet res = Connect.executeQuery(query);
+        if (res.next()) {
+            this.id = idProduit;
+            this.name = res.getString("name");
+            this.rating = res.getDouble("ratings");
+            this.no_of_ratings = res.getInt("no_of_ratings");
+            this.discount_price = res.getInt("discount_price");
+            this.actual_price = res.getInt("actual_price");
+            this.main_category = res.getString("main_category");
+            this.sub_category = res.getString("sub_category");
         }
+        Connect.closeConnexion();
     }
 
     Produit(int idProduit, String name, double rating, int no_of_ratings, int discount_price, int actual_price, int category, int qteStocke) throws SQLException {

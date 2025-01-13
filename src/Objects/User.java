@@ -11,7 +11,7 @@ public class User {
     private String name;
     private String tel;
     private String address;
-    private Panier panier;
+    private Panier_old panier;
 
     private User(int idUser) throws SQLException {
         this.idUser = idUser;
@@ -28,7 +28,7 @@ public class User {
         }
     }
 
-    public Panier getPanier() {
+    public Panier_old getPanier() {
         return panier;
     }
 
@@ -38,7 +38,7 @@ public class User {
 
     // UNFINI
     public void connectPanier() throws SQLException {
-        panier = new Panier(this,haveValidPanier());
+        panier = new Panier_old(this,haveValidPanier());
     }
 
     public static User findUtilisateur(int idUser) throws SQLException {
@@ -123,14 +123,14 @@ public class User {
         return Objects.hashCode(idUser);
     }
 
-    public ArrayList<Panier> HistoryPanier() throws SQLException {
-        ArrayList<Panier> panierList = new ArrayList<>();
+    public ArrayList<Panier_old> HistoryPanier() throws SQLException {
+        ArrayList<Panier_old> panierList = new ArrayList<>();
         String query = "SELECT * FROM panier WHERE Id_user = " + idUser + " AND Date_fin IS NOT NULL";
         try (Connection con = Connect.getConnexion();
              Statement stm = con.createStatement();
              ResultSet result = stm.executeQuery(query);) {
             while (result.next()) {
-                panierList.add(new Panier(result.getInt("Id_panier")));
+                panierList.add(new Panier_old(result.getInt("Id_panier")));
             }
         }
         return panierList;

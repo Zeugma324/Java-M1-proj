@@ -18,6 +18,7 @@ public class Interact_Utilisateur {
 
     // Unfini
     private static void mainMenu(User me) throws SQLException {
+        me.connectPanier();
         print("Quest-ce que vous voulez faire ?");
         print("1. Afficher les produits dans une categorie");
         print("2. Rechercher un produit");
@@ -53,11 +54,11 @@ public class Interact_Utilisateur {
     }
 
     private static void historyPanier(User me) throws SQLException {
-        ArrayList<Panier> paniers = me.HistoryPanier();
+        ArrayList<Panier_old> paniers = me.HistoryPanier();
 
         IntStream.range(0, paniers.size())
                 .forEach(i -> {
-                    Panier panier = paniers.get(i);
+                    Panier_old panier = paniers.get(i);
                     System.out.println("Panier " + (i + 1) + ":");
                     panier.getListProduit().forEach((produit, quantite) -> {
                         System.out.println("    Produit Id: " + produit.getId() +
@@ -71,7 +72,7 @@ public class Interact_Utilisateur {
             if (choice < 0 || choice > paniers.size()) {
                 choice = demanderEntier("Wrong input, please try again ");
             } else {
-                Panier selectedPanier = paniers.get(choice - 1);
+                Panier_old selectedPanier = paniers.get(choice - 1);
                 selectedPanier.getListProduit().entrySet().stream()
                         .forEach(entry -> {
                             try {

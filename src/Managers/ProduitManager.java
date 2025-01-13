@@ -24,9 +24,8 @@ public class ProduitManager {
     public static void rechercherProduit(String keyword) throws SQLException {
         String query = "SELECT produit.id_produit " +
                 "FROM produit " +
-                "WHERE produit.name LIKE '%" + keyword + "%'" +
                 "LEFT JOIN stock ON produit.id_produit = stock.id_produit " +
-                " ORDER BY produit.ratings DESC";
+                "WHERE produit.name LIKE '%" + keyword + "%';";
 
         ResultSet result = Connect.executeQuery(query);
 
@@ -35,7 +34,9 @@ public class ProduitManager {
         while (result.next()) {
             produits.add(findProduit(result.getInt("id_produit")));
         }
-        produits.forEach(produit -> System.out.println(produit));
+        produits.stream()
+                .sorted(selectComparator())
+                .forEach(produit -> System.out.println(produit));
     }
 
     // US 0.3 : Consulter les produits par catégorie
