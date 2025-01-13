@@ -9,7 +9,7 @@ import java.util.stream.*;
 import static Objects.User.*;
 
 public class Interact_Utilisateur {
-    public static void main(String[] args) throws SQLException {
+    public static void tain(String[] args) throws SQLException {
         Boolean estNew = newUserCheck();
         User me = login(estNew);
         print("Bonjour " + me.getName() + " " + me.getLastname());
