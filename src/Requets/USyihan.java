@@ -23,7 +23,7 @@ public class USyihan {
     }
 
 
-    // us1.5 reprendre panier en cours
+    // us1.5 reprendre les paniers en cours
     public static void PanierEnCours(int userID) throws SQLException{
 
         String sql = "SELECT id_panier, Date_debut FROM panier WHERE Id_user = " + userID + " AND Date_fin IS NULL";
@@ -31,10 +31,10 @@ public class USyihan {
         ResultSet result = Connect.executeQuery(sql);
 
         if (result.next()) {
-            int panierID = result.getInt("id_Panier");//获取购物车id
-            String DateDebut = result.getString("Date_debut"); //获取该购物车开始时间
+            int panierID = result.getInt("id_Panier");
+            String DateDebut = result.getString("Date_debut");
 
-            // 打印购物车信息
+
             System.out.println("Panier en cours trouvé :");
             System.out.println("ID Panier: " + panierID);
             System.out.println("Date de début: " + DateDebut);
@@ -48,8 +48,8 @@ public class USyihan {
 
     }
 
-    //us3.3 修改产品库存、类别、客户的数据 editer les statistique sur produits，category...
-    //显示产品原始库存数量 affichier les QteStock Original
+    //us3.3 editer les statistique sur produits，category, client
+    //affichier les QteStock Original de produit
     public static void QteStock(int produitID) throws SQLException{
 
         String sql = "SELECT Id_produit, quantity FROM stock WHERE Id_produit = "  + produitID;
@@ -66,12 +66,11 @@ public class USyihan {
             Connect.closeConnexion();
 
     }
-    //修改产品库存数量
+    //modifier QteStock de produit
     public static void QteStockModifier(int produitID, int QteModifier) throws SQLException{
 
         String sql = "UPDATE stock Set quantity = quantity + " + QteModifier + " WHERE Id_produit = " + produitID;
 
-        // 执行更新 update
         Connect.executeUpdate(sql);
 
         System.out.println("Stock change : " + QteModifier);
@@ -79,10 +78,9 @@ public class USyihan {
         Connect.closeConnexion();
 
     }
-
-    //显示某类别产品的库存数量
+    //Afficher le QteStock d'un produit
     public static void StockParSubCat(int catID) throws SQLException {
-        String sql = "SELECT stock.Id_produit, SUM(stock.quantity) AS total_quantity, category FROM stock JOIN produit on stock.Id_produit = produit.Id_produit WHERE category = " + catID + " GROUP BY stock.Id_produit ";
+        String sql = "SELECT stock.Id_produit, SUM(stock.quantity) AS total_quantite, category FROM stock JOIN produit on stock.Id_produit = produit.Id_produit WHERE category = " + catID + " GROUP BY stock.Id_produit ";
 
         ResultSet result = Connect.executeQuery(sql);
 
@@ -93,13 +91,13 @@ public class USyihan {
             totalStock += Qte;
             System.out.println("Produit ID : " + result.getInt("Id_produit") + " QteStock : " + Qte);
         }
-        // 显示加总数量
+
         System.out.println("Total stock dans la categorie " + catID + " : " + totalStock);
 
         Connect.closeConnexion();
     }
 
-    //修改某类别产品的库存数量
+    //Modifier le Qtestock d'un produit
     public static void ModifierStockParSubCat(int catID, int StockChange) throws SQLException{
 
         String sql = "UPDATE stock JOIN produit on stock.Id_produit = produit.Id_produit Set quantity = quantity + ? WHERE category = ?";
@@ -110,14 +108,14 @@ public class USyihan {
         Connect.closeConnexion();
     }
 
-//将下单次数超过五次的客户设置为VIP客户
-//Définir les clients qui commandent plus de cinq fois comme des clients VIP
-    public static void VIPCLients() throws SQLException{
+
+    //Définir les users VIP (qui commandent plus de cinq fois)
+    public static void VIPusers() throws SQLException{
         String sql = "SELECT Id_user FROM panier JOIN PanierCommande ON panier.Id_panier = PanierCommande.panier_id GROUP by panier.Id_user HAVING COUNT(Id_commande) > 5";
 
         ResultSet result = Connect.executeQuery(sql);
 
-        System.out.println("Les clients suivants sont des VIP :");
+        System.out.println(" VIP users :");
 
         while (result.next()){
             int userID = result.getInt("Id_user");
@@ -130,17 +128,21 @@ public class USyihan {
 
 
 
+
+
+
+
     public static void main(String[] args) throws SQLException {
         Scanner scanner = new Scanner(System.in);
         while (true) {
             System.out.println("=== Menu ===");
-            System.out.println("1. Rechercher un produit par mot-clé");
-            System.out.println("2. Reprendre un panier en cours");
-            System.out.println("3. Afficher le stock d'un produit");
-            System.out.println("4. Modifier le stock d'un produit");
-            System.out.println("5. Afficher le stock d'une catégorie");
-            System.out.println("6. Modifier le stock d'une catégorie");
-            System.out.println("7. Afficher les clients VIP");
+            System.out.println("1. Rechercher les produit par mot-clé");
+            System.out.println("2. Reprendre les paniers en cours");
+            System.out.println("3. Afficher le QteStock d'un produit");
+            System.out.println("4. Modifier le Qtestock d'un produit");
+            System.out.println("5. Afficher le Qtestock des produits d'une catégorie");
+            System.out.println("6. Modifier le Qtestock des produits d'une catégorie");
+            System.out.println("7. Définir les users VIP");
             System.out.println("8. Exit");
             System.out.print("Entrez votre choix : ");
 
@@ -183,7 +185,7 @@ public class USyihan {
                     StockParSubCat(catID); // 显示更新后的库存
                 }
                 case 7 -> {
-                    VIPCLients();
+                    VIPusers();
                 }
                 case 8 -> {
                     System.out.println("Exit l'application.");
