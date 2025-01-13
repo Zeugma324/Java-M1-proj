@@ -171,6 +171,20 @@ public class Produit implements Comparable<Produit> {
                 '}';
     }
 
+    public static void printAllCategories() throws SQLException {
+        String query = "SELECT DISTINCT c.Id_cat, c.main_category, c.sub_category " +
+                "FROM categories c " +
+                "JOIN produit p ON p.category = c.Id_cat";
+        ResultSet result = Connect.executeQuery(query);
+
+        System.out.println("Liste des catégories disponibles :");
+        while (result.next()) {
+            System.out.println("ID Catégorie: " + result.getInt("Id_cat") +
+                    ", Main Category: " + result.getString("main_category") +
+                    ", Sub Category: " + result.getString("sub_category"));
+        }
+    }
+
 
     @Override
     public int compareTo(Produit o) {

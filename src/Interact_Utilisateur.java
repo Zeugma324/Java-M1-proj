@@ -26,13 +26,30 @@ public class Interact_Utilisateur {
         print("4. Quitter");
         String choice = readLine();
         switch (choice) {
-            case "1" -> menuPanier(me);
+            case "1" -> afficherProduitsDansCategorie(me);
             case "2" -> rechercherProduit(me);
             case "3" -> me.getPanier().affichier();
             case "4" -> historyPanier(me);
             case "5" -> System.exit(0);
             default -> mainMenu(me);
         }
+    }
+
+    private static void afficherProduitsDansCategorie(User me) throws SQLException {
+        Produit.printAllCategories();
+        int idCat = demanderEntier("Veuillez entrer l'ID de la catégorie que vous souhaitez consulter :");
+        ProduitManager.consulterProduitsParCategorie(idCat);
+
+        int idProd = demanderEntier("Entrez l'ID du produit pour l'ajouter au panier ou 0 pour retourner :");
+        if (idProd != 0) {
+            try {
+                me.getPanier().addProduit(Produit.findProduit(idProd));
+                System.out.println("Produit ajouté au panier avec succès !");
+            } catch (SQLException e) {
+                System.out.println("Erreur lors de l'ajout du produit au panier : " + e.getMessage());
+            }
+        }
+        mainMenu(me);
     }
 
     private static void historyPanier(User me) throws SQLException {
