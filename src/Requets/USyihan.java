@@ -160,6 +160,12 @@ public class USyihan {
         Connect.closeConnexion();
     }
 
+    //US3.5
+    //consulter de consommateurs :
+    // 10.Catégories de produits les plus sélectionnées dans le panier
+    public static void CatPlusChoisirParUser() throws SQLException {
+
+    }
 
 
     public static void main(String[] args) throws SQLException {
@@ -174,7 +180,9 @@ public class USyihan {
             System.out.println("6. Modifier le Qtestock des produits d'une catégorie");
             System.out.println("7. Définir les users VIP");
             System.out.println("8. Temps moyen de réalisation d'un panier par un client");
-            System.out.println("9. Exit");
+            System.out.println("9.temps moyen de préparation des commandes");
+            System.out.println("10.Catégories de produits les plus sélectionnées dans le panier");
+            System.out.println("11. Exit");
             System.out.print("Entrez votre choix : ");
 
             int choice = scanner.nextInt();
@@ -225,6 +233,9 @@ public class USyihan {
                     AVGTempPrepareCom();
                 }
                 case 10 -> {
+                    CatPlusChoisirParUser();
+                }
+                case 11 -> {
                     System.out.println("Exit l'application.");
                     return;
                 }
