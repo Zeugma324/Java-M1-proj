@@ -60,7 +60,7 @@ public class Connect {
 			 ResultSet rs = stm.executeQuery(query)) {
 			return rs != null && rs.next();
 		} catch (SQLException e) {
-			e.printStackTrace(); // 更好的处理方式是记录日志
+			e.printStackTrace(); 
 			return false;
 		}
 	}
