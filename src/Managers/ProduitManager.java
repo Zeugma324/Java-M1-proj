@@ -89,7 +89,7 @@ public class ProduitManager {
 //                .forEach(produit -> System.out.println(produit));
 //
 //    }
-    public static Comparator selectComparator(){
+    public static Comparator<Produit> selectComparator(){
 
         System.out.println("Choisissez un champ de tri (1.libelle, 2.rating, 3.price) :");
 
