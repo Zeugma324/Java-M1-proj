@@ -31,7 +31,7 @@ public class ProduitBD {
                 subCatAndMainCat.put(res.getString("sub_category"), res.getString("main_category"));
             }
 
-            System.out.println("Catégories chargées avec succès.");
+            System.out.println("Produits chargées avec succès.");
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("Erreur lors du chargement des catégories depuis la table 'categories'", e);
