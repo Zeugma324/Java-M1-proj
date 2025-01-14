@@ -82,19 +82,19 @@ public class USyihan {
     }
     //5.Afficher le QteStock d'un produit
     public static void StockParSubCat(int catID) throws SQLException {
-        String sql = "SELECT stock.Id_produit, SUM(stock.quantity) AS total_quantite, category FROM stock JOIN produit on stock.Id_produit = produit.Id_produit WHERE category = " + catID + " GROUP BY stock.Id_produit ";
+        String sql = "SELECT stock.Id_produit, SUM(stock.quantity) AS total_qte, category FROM stock JOIN produit on stock.Id_produit = produit.Id_produit WHERE category = " + catID + " GROUP BY stock.Id_produit ";
 
         ResultSet result = Connect.executeQuery(sql);
 
         System.out.println("produits dans la categorie " + catID + " : ");
-        int totalStock = 0;
+        int totalQte = 0;
         while (result.next()){
-            int Qte = result.getInt("total_quantite");
-            totalStock += Qte;
+            int Qte = result.getInt("total_qte");
+            totalQte += Qte;
             System.out.println("Produit ID : " + result.getInt("Id_produit") + " QteStock : " + Qte);
         }
 
-        System.out.println("Total stock dans la categorie " + catID + " : " + totalStock);
+        System.out.println("Total stock dans la categorie " + catID + " : " + totalQte);
 
         Connect.closeConnexion();
     }
@@ -199,7 +199,7 @@ public class USyihan {
                     System.out.print("Entrez le changement de quantité : ");
                     int StockChange = scanner.nextInt();
                     ModifierStockParSubCat(catID, StockChange);
-                    StockParSubCat(catID); // 显示更新后的库存
+                    StockParSubCat(catID);
                 }
                 case 7 -> {
                     VIPusers();
