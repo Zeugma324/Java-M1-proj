@@ -7,7 +7,8 @@ import connexion.Connect;
 
 public class USyihan {
 
-    // us0.2 recherche produits par mot-cle
+    // us0.2
+    // 1.recherche produits par mot-cle
     public static void rechercherProduitParMotCle(String motCle) throws SQLException{
         String sql = "SELECT P.name FROM produit P WHERE P.name LIKE '%" + motCle + "%'";
 
@@ -23,7 +24,8 @@ public class USyihan {
     }
 
 
-    // us1.5 reprendre les paniers en cours
+    // us1.5
+    // 2.reprendre les paniers en cours
     public static void PanierEnCours(int userID) throws SQLException{
 
         String sql = "SELECT id_panier, Date_debut FROM panier WHERE Id_user = " + userID + " AND Date_fin IS NULL";
@@ -49,24 +51,24 @@ public class USyihan {
     }
 
     //us3.3 editer les statistique sur produits，category, client
-    //affichier les QteStock Original de produit
+    //3.affichier les QteStock Original de produit
     public static void QteStock(int produitID) throws SQLException{
 
-        String sql = "SELECT Id_produit, quantity FROM stock WHERE Id_produit = "  + produitID;
+        String sql = "SELECT SUM(quantity) AS total_qte FROM stock WHERE Id_produit = "  + produitID;
 
         ResultSet result = Connect.executeQuery(sql);
 
             if(result.next()){
-                System.out.println("Quantity stock de produit " + produitID + " : ");
-                System.out.println(result.getInt("quantity"));
+                int totalQte = result.getInt("total_qte");
+                System.out.println("Quantity stock de produit " + produitID + " : " + totalQte);
             }else{
-                System.out.println("Aucun produit trouvé");
+                System.out.println("Trouvé pas");
             }
 
             Connect.closeConnexion();
 
     }
-    //modifier QteStock de produit
+    //4.modifier QteStock de produit
     public static void QteStockModifier(int produitID, int QteModifier) throws SQLException{
 
         String sql = "UPDATE stock Set quantity = quantity + " + QteModifier + " WHERE Id_produit = " + produitID;
@@ -78,7 +80,7 @@ public class USyihan {
         Connect.closeConnexion();
 
     }
-    //Afficher le QteStock d'un produit
+    //5.Afficher le QteStock d'un produit
     public static void StockParSubCat(int catID) throws SQLException {
         String sql = "SELECT stock.Id_produit, SUM(stock.quantity) AS total_quantite, category FROM stock JOIN produit on stock.Id_produit = produit.Id_produit WHERE category = " + catID + " GROUP BY stock.Id_produit ";
 
@@ -97,10 +99,10 @@ public class USyihan {
         Connect.closeConnexion();
     }
 
-    //Modifier le Qtestock d'un produit
+    //6.Modifier le Qtestock d'un produit
     public static void ModifierStockParSubCat(int catID, int StockChange) throws SQLException{
 
-        String sql = "UPDATE stock JOIN produit on stock.Id_produit = produit.Id_produit Set quantity = quantity + ? WHERE category = ?";
+        String sql = "UPDATE stock JOIN produit on stock.Id_produit = produit.Id_produit Set quantity = quantity + "+ StockChange + " WHERE category = " + catID ;
         Connect.executeUpdate(sql);
 
         System.out.println("Stock change : " + StockChange);
@@ -109,7 +111,7 @@ public class USyihan {
     }
 
 
-    //Définir les users VIP (qui commandent plus de cinq fois)
+    //7.Définir les users VIP (qui commandent plus de cinq fois)
     public static void VIPusers() throws SQLException{
         String sql = "SELECT Id_user FROM panier JOIN PanierCommande ON panier.Id_panier = PanierCommande.panier_id GROUP by panier.Id_user HAVING COUNT(Id_commande) > 5";
 
@@ -127,7 +129,7 @@ public class USyihan {
     }
 
     //US3.2
-    // Temps moyen de réalisation d'un panier par un client
+    // 8.Temps moyen de réalisation d'un panier par un client
     public static void AVGTempRealiserPanier() throws SQLException{
         String sql = "SELECT AVG(TIMESTAMPDIFF(Day, Date_debut, Date_fin)) AS TempMoyenP FROM panier WHERE Date_fin IS NOT NULL";
 
