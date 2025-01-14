@@ -144,7 +144,21 @@ public class USyihan {
         Connect.closeConnexion();
     }
 
+    //9.temps moyen de préparation des commandes(缺数据）
+    public static void AVGTempPrepareCom() throws SQLException{
 
+        String sql = " SELECT AVG(TIMESTAMPDIFF(Day, L.date_livrasion, P.Date_fin)) AS TempMoyenC FROM panier P JOIN PanierCommande PC ON P.Id_panier = PC.panier_id JOIN livrasion L ON L.id_commande = PC.Id_commande WHERE P.Date_fin IS NOT NULL AND L.date_livrasion IS NOT NULL ";
+
+        ResultSet result = Connect.executeQuery(sql);
+
+        if (result.next()){
+            double AVGTempDays = result.getDouble("TempMoyenC");
+            System.out.println("temps moyen de préparation des commandes : " + AVGTempDays + "jours");
+        }else {
+            System.out.println("Trouvez pas les commandes preparés");
+        }
+        Connect.closeConnexion();
+    }
 
 
 
@@ -208,6 +222,9 @@ public class USyihan {
                     AVGTempRealiserPanier();
                 }
                 case 9 -> {
+                    AVGTempPrepareCom();
+                }
+                case 10 -> {
                     System.out.println("Exit l'application.");
                     return;
                 }
