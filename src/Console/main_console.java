@@ -1,5 +1,8 @@
 package Console;
 
+import BD_Connect.UserDB;
+import Objects.User;
+
 import java.sql.SQLException;
 import java.util.Scanner;
 
@@ -18,13 +21,18 @@ public class main_console {
             System.out.println("8. Afficher le prix moyen par catégorie");
             System.out.println("9. Comparer les notes d’une catégorie à l’autre");
 
-            System.out.println("10. Quitter");
+            System.out.println("0. Quitter");
 
             while (true) {
                 System.out.print("\nVotre choix : ");
                 String choix = sc.nextLine();
 
                 switch (choix) {
+                    case "0":
+                        System.out.println("A bientôt !");
+                        System.exit(0);
+                        break;
+
                     case "1":
                         System.out.print("Entrez l'ID du produit : ");
                         int idProd = Integer.parseInt(sc.nextLine());
@@ -63,11 +71,18 @@ public class main_console {
                         US.compareRatingAcrossCategories();
                         break;
 
+
                     case "10":
-                        System.out.println("A bientôt !");
-                        System.exit(0);
+                        US.AfficherProduitFrequents(UserDB.findUserById(1), 10);
                         break;
 
+                    case "11":
+                        US.affichierHabitudes(UserDB.findUserById(1));
+                        break;
+
+                    case "12" :
+                        US.faireRecommandation(UserDB.findUserById(1));
+                        break;
                     default:
                         System.out.println("Choix invalide !");
                         break;

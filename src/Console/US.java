@@ -1,13 +1,17 @@
 package Console;
 
 import BD_Connect.ProduitBD;
+import BD_Connect.UserDB;
 import Objects.Produit;
+import Objects.User;
 import connexion.Connect;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static Managers.UserManager.*;
 
 public class US {
 
@@ -35,13 +39,20 @@ public class US {
     // US 0.2 - Rechercher un produit par mot-clé
     // =========================
     public static void rechercherProduit(String keyword) throws SQLException {
-        String query = "SELECT id_produit FROM produit WHERE name LIKE '%" + keyword + "%'";
+        String query = "SELECT * FROM produit WHERE name LIKE '%" + keyword + "%'";
         ResultSet result = Connect.executeQuery(query);
         ArrayList<Produit> produits = new ArrayList<>();
 
         System.out.println("\nProduits trouvés pour le mot-clé : " + keyword);
         while (result.next()) {
-            produits.add(ProduitBD.loadProduit(result.getInt("id_produit")));
+            produits.add(new Produit(
+                    result.getInt("id_produit"),
+                    result.getString("name"),
+                    result.getDouble("ratings"),
+                    result.getInt("no_of_ratings"),
+                    result.getInt("discount_price"),
+                    result.getInt("actual_price"),
+                    result.getInt("category")));
         }
 
         if (produits.isEmpty()) {
@@ -60,25 +71,35 @@ public class US {
     // =========================
     // US 0.3 - Consulter les produits par catégorie
     // =========================
-    public static void consulterProduitsParCategorie(int idCat) throws SQLException {
-        String query = "SELECT id_produit FROM produit WHERE category = " + idCat;
+    public static ArrayList<Produit> consulterProduitsParCategorie(int idCat) throws SQLException {
+        String query = "SELECT * FROM produit WHERE category = " + idCat;
         ResultSet result = Connect.executeQuery(query);
         ArrayList<Produit> liste = new ArrayList<>();
 
         while (result.next()) {
-            Produit p = ProduitBD.loadProduit(result.getInt("id_produit"));
-            if (p != null) liste.add(p);
+            liste.add(new Produit(
+                    result.getInt("id_produit"),
+                    result.getString("name"),
+                    result.getDouble("ratings"),
+                    result.getInt("no_of_ratings"),
+                    result.getInt("discount_price"),
+                    result.getInt("actual_price"),
+                    result.getInt("category")
+            ));
         }
 
         if (liste.isEmpty()) {
             System.out.println("Aucun produit trouvé dans la catégorie " + idCat);
-            return;
+            return null;
         }
 
         // Tri (US 0.4)
         liste.stream()
              .sorted(selectComparator())
+                .limit(10)
              .forEach(System.out::println);
+        Connect.closeConnexion();
+        return liste;
     }
 
     // =========================
@@ -86,14 +107,21 @@ public class US {
     // =========================
     public static Comparator<Produit> selectComparator() {
         System.out.println("Choisissez un champ de tri (1.libelle, 2.rating, 3.price) :");
-        String trier = System.console() != null 
-                         ? System.console().readLine() 
-                         : "1";  
+        String trier;
+
+        if (System.console() != null) {
+            trier = System.console().readLine();
+        } else {
+            trier = "2";
+        }
 
         System.out.println("Ordre de tri (1.asc, 2.desc) :");
-        String order = System.console() != null 
-                         ? System.console().readLine() 
-                         : "1";
+        String order;
+        if (System.console() != null) {
+            order = System.console().readLine();
+        } else {
+            order = "2";
+        }
 
         Comparator<Produit> comparator;
         switch (trier) {
@@ -111,7 +139,7 @@ public class US {
                 break;
         }
 
-        if ("2".equals(order)) {
+        if (!order.equals("1")) {
             comparator = comparator.reversed();
         }
         return comparator;
@@ -240,7 +268,78 @@ public class US {
         }
         Connect.closeConnexion();
     }
-}
+
+    // US2.1. Je veux consulter la liste des produits que je commande le plus fréquemment.
+    public static void AfficherProduitFrequents(User user, int limit) throws SQLException {
+        HashMap<Produit, Integer> produits = historyPanier(user);
+        produits.entrySet().stream()
+                .sorted((o1, o2) -> o2.getValue().compareTo(o1.getValue()))
+                .limit(limit)
+                .forEach(o -> System.out.println("Achat fois :" + o.getValue() + " ; Produit :" + o.getKey().getLibelle()));
+    }
+
+    //2.2 Je veux consulter mes habitudes de consommation (bio, nutriscore, catégorie de produits, marques).
+    public static void affichierHabitudes(User user) throws SQLException {
+        System.out.println("Résumé des habitudes de consommation :");
+        HashMap<Produit, Integer> produits = historyPanier(user);
+        System.out.println("produits");
+        ArrayList<String> category_habits = calculateCategoryHabitude(produits);
+
+        String discount_habit = calculateDiscountHabitude(produits);
+
+        String popularity_habit = calculatePopularityHabitude(produits);
+
+
+        System.out.println("Catégories préférées :");
+        category_habits.forEach(System.out::println);
+
+        System.out.println("Discount préféré :" + discount_habit);
+        System.out.println("Popularité préférée :" + popularity_habit);
+    }
+
+    //US 2.3
+    public static ArrayList<Produit> faireRecommandation(User user) throws SQLException {
+        Scanner scanner = new Scanner(System.in);
+        boolean[] preference = validerHabitudes(user);
+        HashMap<Produit, Integer> produits_history= historyPanier(user);
+        ArrayList<String> excluded_subCategories = new ArrayList<>();
+
+        produits_history.keySet().stream()
+                .forEach(produit -> excluded_subCategories.add(produit.getSub_category()));
+        excluded_subCategories.stream().distinct().collect(Collectors.toList());
+
+        ArrayList<String> category = calculateCategoryHabitude(produits_history);
+        String discount = calculateDiscountHabitude(produits_history);
+        String popularity = calculatePopularityHabitude(produits_history);
+
+        ArrayList<Produit> toutLesProduitsPossible = listDeProduitsDansCategory(produits_history,user);
+        Map<Produit, Integer> scoreMap = toutLesProduitsPossible.stream()
+                .collect(Collectors.toMap(prod -> prod, prod -> {
+                    try {
+                        return compairingScore(prod, preference, category, discount, popularity);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                        return 0;
+                    }
+                }));
+        scoreMap.entrySet().stream().forEach(e -> {System.out.println(e.getKey().getId() + " : " + e.getValue());});
+        toutLesProduitsPossible.stream()
+                .sorted((p1, p2) -> scoreMap.get(p2) - scoreMap.get(p1))
+                .filter(prod -> ! excluded_subCategories.contains(prod.getSub_category()))
+                .limit(15)
+                .forEach(System.out::println);
+
+        return toutLesProduitsPossible;
+    }
+
+    public static void main(String[] args) throws SQLException {
+//        AfficherProduitFrequents(UserDB.findUserById(1),5);
+//        US.affichierHabitudes(UserDB.findUserById(1));
+
+        faireRecommandation(UserDB.findUserById(1));
+    }
+
+    }
     
 
 

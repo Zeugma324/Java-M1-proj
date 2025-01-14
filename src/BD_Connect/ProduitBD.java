@@ -4,7 +4,7 @@ import Objects.Produit;
 import connexion.Connect;
 
 import java.sql.*;
-import java.util.TreeMap;
+import java.util.*;
 
 public class ProduitBD {
 
@@ -12,6 +12,9 @@ public class ProduitBD {
     public static TreeMap<Integer, String> id_catAndCat = new TreeMap<>();
     public static TreeMap<String, String> subCatAndMainCat = new TreeMap<>();
     public static TreeMap<String, Integer> catAndId_cat = new TreeMap<>();
+
+    public static HashMap<String, Integer> mainCatAndAvgNoRating = new HashMap<>();
+    public static HashMap<String, Integer> mainCatAndAvgRating = new HashMap<>();
 
     // Bloc statique pour charger les catégories depuis la base de données
     static {
@@ -37,6 +40,43 @@ public class ProduitBD {
             throw new RuntimeException("Erreur lors du chargement des catégories depuis la table 'categories'", e);
         }
     }
+
+    static {
+        try(Connection conn = Connect.getConnexion();
+            Statement stm = conn.createStatement();
+        ){
+            String query = "SELECT main_category, AVG(no_of_ratings) as AVG_PRIX " +
+                    "FROM categories c JOIN produit p ON c.id_cat = p.category " +
+                    "GROUP BY main_category";
+
+            ResultSet rs = stm.executeQuery(query);
+            while (rs.next()) {
+                mainCatAndAvgNoRating.put(rs.getString("main_category"), rs.getInt("AVG_PRIX"));
+            }
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erreur lors du chargement des catégories depuis la table 'categories'", e);
+        }
+    }
+
+    static {
+        try(Connection conn = Connect.getConnexion();
+            Statement stm = conn.createStatement();
+        ){
+            String query = "SELECT main_category, AVG(ratings * 10) as AVG_rating " +
+                    "FROM categories c JOIN produit p ON c.id_cat = p.category " +
+                    "GROUP BY main_category";
+
+            ResultSet rs = stm.executeQuery(query);
+            while (rs.next()) {
+                mainCatAndAvgNoRating.put(rs.getString("main_category"), rs.getInt("AVG_rating"));
+            }
+        }catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erreur lors du chargement des catégories depuis la table 'categories'", e);
+        }
+    }
+
 
     // Méthode pour mettre à jour un produit (valeur String)
     private void update(Produit produit, String key, String value) throws SQLException {

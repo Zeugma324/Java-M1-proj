@@ -18,6 +18,25 @@ public class UserDB {
 		byte[] hash = MessageDigest.getInstance("SHA-256").digest(a.getBytes());
 		return HexFormat.of().formatHex(hash);
 	}
+
+	public static User findUserById(int id) throws SQLException {
+		String query = "SELECT * FROM utilisateur WHERE id_user = " + id;
+		ResultSet rs = Connect.executeQuery(query);
+		if(rs.next()) {
+			User user = new User(
+				id,
+				rs.getString("lastname"),
+				rs.getString("name"),
+				rs.getString("tel"),
+				rs.getString("adress"),
+				rs.getString("email"),
+				rs.getString("mot_de_passe")
+			);
+			user.setPanier(PanierBD.loadPanierByUser(user)) ;
+			return user;
+		}
+		return null;
+	}
 	
 	public User findUserBylogin(String email, String mdp) throws SQLException, NoSuchAlgorithmException {
 		String query = "SELECT * FROM utilisateur WHERE email = ? AND mot_de_passe = ?";

@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
 public class PanierBD {
 
     public static Panier loadPanierByUser(User user) throws SQLException {
-        String query = "SELECT * FROM Panier "
+        String query = "SELECT * FROM panier "
                 + "WHERE id_user = " + user.getIdUser() + " "
-                + "AND Datefin IS NULL ;";
+                + "AND Date_fin IS NULL ;";
         if(Connect.recordExists(query)){
             ResultSet res = Connect.executeQuery(query);
             if(res.next()){
@@ -23,7 +23,7 @@ public class PanierBD {
                 String start_time = res.getString("Date_debut");
                 TreeMap<Produit, Integer> produits = new TreeMap<>();
                 while(res.next()){
-                    produits.put(ProduitBD.loadProduit(res.getInt("id_produit")), res.getInt("quantity"));
+                    produits.put(ProduitBD.loadProduit(res.getInt("id_produit")), 1);
                 }
                 Panier panier = new Panier(id, produits, user, start_time);
                 return panier;
@@ -31,6 +31,8 @@ public class PanierBD {
         }
         return new Panier(calculateID(),user);
     }
+
+
 
     private static int calculateID () throws SQLException {
         String query = "SELECT MAX(Id_panier) FROM panier";

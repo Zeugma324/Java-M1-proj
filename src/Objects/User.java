@@ -22,6 +22,17 @@ public class User {
 		this.mdp = mdp;
 	}
 
+	public User(int idUser, String lastname, String name, String tel, String address, String email,
+				String mdp) {
+		this.idUser = idUser;
+		this.lastname = lastname;
+		this.name = name;
+		this.tel = tel;
+		this.address = address;
+		this.email = email;
+		this.mdp = mdp;
+	}
+
 	public int getIdUser() {
 		return idUser;
 	}

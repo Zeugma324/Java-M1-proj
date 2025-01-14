@@ -19,9 +19,14 @@ public class Produit implements Comparable<Produit> {
     private Integer actual_price;
     private String sub_category;
     private String main_category;
-    private int discount_rate = 100 * (discount_price/actual_price);
+    private Integer discount_rate = calculateDiscountRate();
 
-
+    public Integer calculateDiscountRate() {
+        if (discount_price == null || actual_price == null || actual_price == 0) {
+            return 0;
+        }
+        return 100 * discount_price / actual_price;
+    }
 
     public Produit(){ }
 
@@ -44,7 +49,7 @@ public class Produit implements Comparable<Produit> {
     public Integer  getActual_price() { return this.actual_price; }
     public String getMain_category() { return this.main_category; }
     public String getSub_category() { return this.sub_category; }
-    public int getDiscount_rate() { return this.discount_rate; }
+    public Integer getDiscount_rate() { return this.discount_rate; }
 
     public void setId(int id) { this.id = id; }
     public void setLibelle(String libelle) { this.libelle = libelle; }

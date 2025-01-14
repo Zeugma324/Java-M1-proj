@@ -4,7 +4,6 @@ import java.util.*;
 
 import BD_Connect.ProduitBD;
 import Objects.*;
-import static Objects.Produit.*;
 import connexion.Connect;
 
 import java.sql.ResultSet;
@@ -44,29 +43,30 @@ public class ProduitManager {
 
     // US 0.3 : Consulter les produits par catégorie
     public static ArrayList<Produit> consulterProduitsParCategorie(int idCat) throws SQLException {
-        String query = "SELECT produit.id_produit " +
-                "FROM produit " +
-                "WHERE produit.category = " + idCat;
+        String query = "SELECT * FROM produit WHERE category = " + idCat;
         ResultSet result = Connect.executeQuery(query);
-        ArrayList<Integer> ids = new ArrayList<>();
-        while(result.next()) {
-            ids.add(result.getInt("id_produit"));
+        ArrayList<Produit> liste = new ArrayList<>();
+
+        while (result.next()) {
+            liste.add(new Produit(
+                    result.getInt("id_produit"),
+                    result.getString("name"),
+                    result.getDouble("ratings"),
+                    result.getInt("no_of_ratings"),
+                    result.getInt("discount_price"),
+                    result.getInt("actual_price"),
+                    result.getInt("category")
+            ));
         }
-        ArrayList<Produit> produits = new ArrayList<>();
-        ids.stream()
-                .map(id -> {
-                    try {
-                        return ProduitBD.loadProduit(id);
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .filter(produit -> produit != null)
-                .forEach(produit -> produits.add(produit));
-        produits.stream()
+
+        if (liste.isEmpty()) {
+            System.out.println("Aucun produit trouvé dans la catégorie " + idCat);
+            return liste;
+        }
+        liste.stream()
                 .sorted(selectComparator())
-                .forEach(produit -> System.out.println(produit));
-        return produits;
+                .limit(10);
+        return liste;
     }
 
     public static ArrayList<Produit> consulterProduitsParCategorieSansSort(int idCat) throws SQLException {
