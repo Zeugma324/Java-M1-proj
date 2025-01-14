@@ -14,7 +14,7 @@ public class PanierBD {
 
     public static Panier loadPanierByUser(User user) throws SQLException {
         String query = "SELECT * FROM Panier "
-                + "WHERE id_user = " + user.getId() + " "
+                + "WHERE id_user = " + user.getIdUser() + " "
                 + "AND Datefin IS NULL ;";
         if(Connect.recordExists(query)){
             ResultSet res = Connect.executeQuery(query);
@@ -54,20 +54,20 @@ public class PanierBD {
             String query = "UPDATE Panier SET qte_produit = " + updatedQuantity +
                     " WHERE Id_panier = " + panier.getId() +
                     " AND Id_produit = " + prod.getId() +
-                    " AND Id_user = " + panier.getUser().getId();
+                    " AND Id_user = " + panier.getUser().getIdUser();
             Connect.executeUpdate(query);
         } else {
             panier.getListProduit().put(prod, quantity);
 
             String query = "INSERT INTO Panier (Id_panier, Id_produit, qte_produit, Date_debut, Date_fin, Id_user) " +
-                    "VALUES (" + panier.getId() + ", " + prod.getId() + ", " + quantity + ", '" + panier.getStartTime() + "', NULL, " + panier.getUser().getId() + ")";
+                    "VALUES (" + panier.getId() + ", " + prod.getId() + ", " + quantity + ", '" + panier.getStartTime() + "', NULL, " + panier.getUser().getIdUser() + ")";
             Connect.executeUpdate(query);
         }
     }
 
     public static void removeProduitFromPanier(Panier panier, Produit prd) throws SQLException {
         panier.getListProduit().remove(prd);
-        String query = "DELETE FROM Panier WHERE Id_produit = " + prd.getId() + " AND Id_panier = " + panier.getId() + " AND Id_user = " + panier.getUser().getId() + " AND Date_debut = '" + panier.getStartTime() + "' )";
+        String query = "DELETE FROM Panier WHERE Id_produit = " + prd.getId() + " AND Id_panier = " + panier.getId() + " AND Id_user = " + panier.getUser().getIdUser() + " AND Date_debut = '" + panier.getStartTime() + "' )";
         Connect.executeUpdate(query);
     }
 
@@ -76,11 +76,11 @@ public class PanierBD {
         String query = "UPDATE Panier SET qte_produit = " + quantity +
                 " WHERE Id_panier = " + panier.getId() +
                 " AND Id_produit = " + prd.getId() +
-                " AND Id_user = " + panier.getUser().getId();
+                " AND Id_user = " + panier.getUser().getIdUser();
     }
 
     public void annulerPanier(Panier panier) throws SQLException {
-        String query = "DELETE FROM Panier WHERE Id_user = " + panier.getUser().getId() +
+        String query = "DELETE FROM Panier WHERE Id_user = " + panier.getUser().getIdUser() +
                 " AND Date_debut = '" + panier.getStartTime() + "' )";
         Connect.executeUpdate(query);
         panier.getListProduit().clear();
@@ -107,7 +107,7 @@ public class PanierBD {
         String str = "SELECT * " +
                 "FROM panier pa JOIN produit p ON pa.Id_produit = p.Id_produit " +
                 "JOIN categories c ON p.category = c.Id_cat " +
-                "WHERE pa.Id_user = " + panier.getUser().getId() + " AND pa.Date_fin IS NOT NULL";
+                "WHERE pa.Id_user = " + panier.getUser().getIdUser() + " AND pa.Date_fin IS NOT NULL";
         ResultSet res = Connect.executeQuery(str);
         while (res.next()) {
             Produit prod = new Produit(res.getInt("Id_produit"), res.getString("name"),
