@@ -167,6 +167,25 @@ public class USyihan {
 
     }
 
+    //US4.3
+    //11.finaliser la préparation d'une commande
+    public static void FinalPreparation() throws SQLException{
+        String sql = "SELECT id_commande FROM livrasion WHERE date_livrasion IS NOT NULL";
+
+        ResultSet result = Connect.executeQuery(sql);
+
+        if (result.next()){
+            int commandeID = result.getInt("Id_commande");
+
+            System.out.println("Commande ID: " + commandeID +" Préparation terminée ");
+        }else{
+            System.out.println("Trouvée pas le commande avec date de livraison.");
+
+        }
+        Connect.closeConnexion();
+    }
+
+
 
     public static void main(String[] args) throws SQLException {
         Scanner scanner = new Scanner(System.in);
@@ -182,7 +201,8 @@ public class USyihan {
             System.out.println("8. Temps moyen de réalisation d'un panier par un client");
             System.out.println("9.temps moyen de préparation des commandes");
             System.out.println("10.Catégories de produits les plus sélectionnées dans le panier");
-            System.out.println("11. Exit");
+            System.out.println("11.Finaliser la préparation d'une commande");
+            System.out.println("12. Exit");
             System.out.print("Entrez votre choix : ");
 
             int choice = scanner.nextInt();
@@ -236,6 +256,10 @@ public class USyihan {
                     CatPlusChoisirParUser();
                 }
                 case 11 -> {
+                    FinalPreparation();
+                }
+
+                case 12 -> {
                     System.out.println("Exit l'application.");
                     return;
                 }
