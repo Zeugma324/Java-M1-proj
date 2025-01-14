@@ -43,7 +43,7 @@ public class ProduitManager {
     }
 
     // US 0.3 : Consulter les produits par catégorie
-    public static void consulterProduitsParCategorie(int idCat) throws SQLException {
+    public static ArrayList<Produit> consulterProduitsParCategorie(int idCat) throws SQLException {
         String query = "SELECT produit.id_produit " +
                 "FROM produit " +
                 "WHERE produit.category = " + idCat;
@@ -52,6 +52,7 @@ public class ProduitManager {
         while(result.next()) {
             ids.add(result.getInt("id_produit"));
         }
+        ArrayList<Produit> produits = new ArrayList<>();
         ids.stream()
                 .map(id -> {
                     try {
@@ -61,10 +62,35 @@ public class ProduitManager {
                     }
                 })
                 .filter(produit -> produit != null)
+                .forEach(produit -> produits.add(produit));
+        produits.stream()
                 .sorted(selectComparator())
-                .forEach(System.out::println);
+                .forEach(produit -> System.out.println(produit));
+        return produits;
     }
 
+    public static ArrayList<Produit> consulterProduitsParCategorieSansSort(int idCat) throws SQLException {
+        String query = "SELECT produit.id_produit " +
+                "FROM produit " +
+                "WHERE produit.category = " + idCat;
+        ResultSet result = Connect.executeQuery(query);
+        ArrayList<Integer> ids = new ArrayList<>();
+        while(result.next()) {
+            ids.add(result.getInt("id_produit"));
+        }
+        ArrayList<Produit> produits = new ArrayList<>();
+        ids.stream()
+                .map(id -> {
+                    try {
+                        return ProduitBD.loadProduit(id);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .filter(produit -> produit != null)
+                .forEach(produit -> produits.add(produit));
+        return produits;
+    }
 //    //US 0.4 - Trier un produit par quelque chose
 //    public static void trierProduits(int idCat) throws SQLException {
 //        String query = "SELECT produit.id_produit " +

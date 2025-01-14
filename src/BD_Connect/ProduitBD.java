@@ -15,7 +15,7 @@ public class ProduitBD {
 
     static {
         try {
-            String query = "SELECT id_cat, main_category, sub_category FROM categorie";
+            String query = "SELECT id_cat, main_category, sub_category FROM categories";
             ResultSet res = Connect.executeQuery(query);
 
             while (res.next()) {

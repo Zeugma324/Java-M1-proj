@@ -13,18 +13,19 @@ import static BD_Connect.ProduitBD.subCatAndMainCat;
 public class Produit implements Comparable<Produit> {
     private int id;
     private String libelle;
-    private double rating;
-    private int no_of_ratings;
-    private int discount_price;
-    private int actual_price;
+    private Double rating;
+    private Integer no_of_ratings;
+    private Integer discount_price;
+    private Integer actual_price;
     private String sub_category;
     private String main_category;
+    private int discount_rate = 100 * (discount_price/actual_price);
 
 
 
     public Produit(){ }
 
-    public Produit(int id, String libelle, double rating, int no_of_ratings, int discount_price, int actual_price, int category) {
+    public Produit(int id, String libelle, Double rating, Integer no_of_ratings, Integer discount_price, Integer actual_price, int category) {
         this.id = id;
         this.libelle = libelle;
         this.rating = rating;
@@ -37,12 +38,13 @@ public class Produit implements Comparable<Produit> {
 
     public int getId() { return this.id; }
     public String getLibelle() { return this.libelle; }
-    public double getRating() { return this.rating; }
-    public int getNo_of_ratings() { return this.no_of_ratings; }
-    public int getDiscount_price() { return this.discount_price; }
-    public int getActual_price() { return this.actual_price; }
+    public Double getRating() { return this.rating; }
+    public Integer  getNo_of_ratings() { return this.no_of_ratings; }
+    public Integer  getDiscount_price() { return this.discount_price; }
+    public Integer  getActual_price() { return this.actual_price; }
     public String getMain_category() { return this.main_category; }
     public String getSub_category() { return this.sub_category; }
+    public int getDiscount_rate() { return this.discount_rate; }
 
     public void setId(int id) { this.id = id; }
     public void setLibelle(String libelle) { this.libelle = libelle; }
