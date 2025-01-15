@@ -167,6 +167,8 @@ public class USyihan {
     //public static void CatPlusChoisirParUser() throws SQLException {
     //}
 
+
+
     //US4.3
     //10.finaliser la préparation d'une commande
     public static void FinalPreparation(int commandeID) throws SQLException{
@@ -184,6 +186,19 @@ public class USyihan {
     }
 
 
+    //US4.2
+    //11.marque une commande en préparation pour un retrait ou un envoi.(需要完善数据库添加订单状态列）
+    public static void MarquePreparation(int commandeID) throws SQLException{
+        String sql = "UPDATE commande SET status = 'en préparation'  WHERE id_commande = " + commandeID;
+
+        Connect.executeUpdate(sql);
+
+        System.out.println("Bien Marqué");
+
+        Connect.closeConnexion();
+
+    }
+
 
     public static void main(String[] args) throws SQLException {
         Scanner scanner = new Scanner(System.in);
@@ -200,7 +215,8 @@ public class USyihan {
             System.out.println("9.temps moyen de préparation des commandes");
             //System.out.println("10.Catégories de produits les plus sélectionnées dans le panier");
             System.out.println("10.Finaliser la préparation d'une commande");
-            System.out.println("11. Exit");
+            System.out.println("11.Marque une commande en préparation pour un retrait ou un envoi");
+            System.out.println("12. Exit");
             System.out.print("Entrez votre choix : ");
 
             int choice = scanner.nextInt();
@@ -258,8 +274,13 @@ public class USyihan {
                     int commandeID = scanner.nextInt();
                     FinalPreparation(commandeID);
                 }
-
                 case 11 -> {
+                    System.out.print("Entrez l'ID commmande : ");
+                    int commandeID = scanner.nextInt();
+                    MarquePreparation(commandeID);
+                }
+
+                case 12 -> {
                     System.out.println("Exit l'application.");
                     return;
                 }
