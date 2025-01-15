@@ -119,10 +119,11 @@ public class USyihan {
 
         System.out.println(" VIP users :");
 
-        while (result.next()){
+        if (result.next()){
             int userID = result.getInt("Id_user");
             System.out.println("User ID" + userID);
-
+        }else {
+            System.out.println("Non VIP users.");
         }
 
         Connect.closeConnexion();
@@ -163,12 +164,11 @@ public class USyihan {
     //US3.5
     //consulter de consommateurs :
     // 10.Catégories de produits les plus sélectionnées dans le panier
-    public static void CatPlusChoisirParUser() throws SQLException {
-
-    }
+    //public static void CatPlusChoisirParUser() throws SQLException {
+    //}
 
     //US4.3
-    //11.finaliser la préparation d'une commande
+    //10.finaliser la préparation d'une commande
     public static void FinalPreparation(int commandeID) throws SQLException{
         String sql = "SELECT id_commande FROM livrasion WHERE date_livrasion IS NOT NULL AND id_commande = " + commandeID ;
 
@@ -198,9 +198,9 @@ public class USyihan {
             System.out.println("7. Définir les users VIP");
             System.out.println("8. Temps moyen de réalisation d'un panier par un client");
             System.out.println("9.temps moyen de préparation des commandes");
-            System.out.println("10.Catégories de produits les plus sélectionnées dans le panier");
-            System.out.println("11.Finaliser la préparation d'une commande");
-            System.out.println("12. Exit");
+            //System.out.println("10.Catégories de produits les plus sélectionnées dans le panier");
+            System.out.println("10.Finaliser la préparation d'une commande");
+            System.out.println("11. Exit");
             System.out.print("Entrez votre choix : ");
 
             int choice = scanner.nextInt();
@@ -250,16 +250,16 @@ public class USyihan {
                 case 9 -> {
                     AVGTempPrepareCom();
                 }
+                //case 10 -> {
+                //    CatPlusChoisirParUser();
+                //}
                 case 10 -> {
-                    CatPlusChoisirParUser();
-                }
-                case 11 -> {
                     System.out.print("Entrez l'ID commmande : ");
                     int commandeID = scanner.nextInt();
                     FinalPreparation(commandeID);
                 }
 
-                case 12 -> {
+                case 11 -> {
                     System.out.println("Exit l'application.");
                     return;
                 }
