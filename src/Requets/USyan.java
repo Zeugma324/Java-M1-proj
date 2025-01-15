@@ -105,7 +105,6 @@ public class USyan {
                 "WHERE pa.id_user = " + userId + " " +
                 "GROUP BY ca.main_category " +
                 "ORDER BY purchase_count DESC LIMIT 1";
-
         String recommendationQueryTemplate = "SELECT p.id_produit, p.name, p.actual_price, p.ratings " +
                 "FROM produit p " +
                 "JOIN categories ca ON p.category = ca.id_cat " +
@@ -374,6 +373,9 @@ public class USyan {
             }
         }
     }
+
+    // US 4.2 Je marque une commande en préparation pour un retrait ou un envoi
+
 
 
 
