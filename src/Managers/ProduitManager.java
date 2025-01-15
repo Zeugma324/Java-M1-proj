@@ -1,5 +1,8 @@
 package Managers;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 import BD_Connect.ProduitBD;
@@ -10,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import static BD_Connect.ProduitBD.catAndId_cat;
 
 
 public class ProduitManager {
@@ -163,4 +167,57 @@ public class ProduitManager {
         }
     }
 
+    //US 3.6. Je veux importer automatiquement des produits afin de mettre à jour mon catalogue produit.
+    //Le csv est dans le dossier data.
+    public static void importerProduit(String name_csv) throws SQLException, IOException {
+        String csvFile = "src/data/" + name_csv + ".csv";
+        char separator = ',';
+        StringBuilder query = new StringBuilder();
+        query.append("INSERT INTO produit(name, ratings, no_of_ratings, discount_price, actual_price, category) VALUES ");
+        ArrayList<String[]> produitList = new ArrayList<>();
+
+        for (String line : Files.readAllLines(Paths.get(csvFile))) {
+            String[] data = line.split(String.valueOf(separator));
+            produitList.add(data);
+        }
+
+        produitList.forEach(produit -> {
+            try {
+                String libelle = produit[0];
+                String main_category = produit[1];
+                String sub_category = produit[2];
+                double rating = Double.parseDouble(produit[3]);
+                int no_of_ratings = Integer.parseInt(produit[4]);
+                int discount_price = Integer.parseInt(produit[5]);
+                int actual_price = Integer.parseInt(produit[6]);
+
+                // check if category already exist
+                int category;
+                if (catAndId_cat.containsKey(sub_category)) {
+                    category = catAndId_cat.get(sub_category);
+                } else {
+                    // new category insert into table category
+                    category = catAndId_cat.size() + 1;
+                    catAndId_cat.put(sub_category, category);
+
+                    String insertCategoryQuery = String.format(
+                            "INSERT INTO categories (Id_cat, main_category, sub_category) VALUES (%d, '%s', '%s')",
+                            category, main_category, sub_category);
+                    Connect.executeUpdate(insertCategoryQuery);
+                }
+
+                // ecrit un quand query donc on peux faire tout les insert dan 1 grand query.
+                query.append(String.format("('%s', %.2f, %d, %d, %d, %d), ",
+                        libelle, rating, no_of_ratings, discount_price, actual_price, category));
+            } catch (Exception e) {
+                System.err.println("错误解析行: " + String.join(",", produit));
+                e.printStackTrace();
+            }
+        });
+
+        query.delete(query.length() - 2, query.length());
+        query.append(';');
+        Connect.executeUpdate(query.toString());
+        Connect.closeConnexion();
+    }
 }

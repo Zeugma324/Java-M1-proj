@@ -89,7 +89,7 @@ public class PanierBD {
     }
 
     //waiting to be connected with commandJava
-    public void validerPanier(Panier panier) throws SQLException {
+    public static void validerPanier(Panier panier) throws SQLException {
         panier.setEndTime(new String(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
         panier.setActive(false);
 
@@ -144,6 +144,5 @@ public class PanierBD {
             System.out.println(new_prod.toString());
         }
     }
-
 
 }
