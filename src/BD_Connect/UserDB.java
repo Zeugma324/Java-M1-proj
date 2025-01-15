@@ -13,10 +13,15 @@ import Objects.User;
 
 
 public class UserDB {
-	
-	private static String hash(String a) throws NoSuchAlgorithmException {
-		byte[] hash = MessageDigest.getInstance("SHA-256").digest(a.getBytes());
-		return HexFormat.of().formatHex(hash);
+
+	public static String hash(String a) {
+		try {
+			byte[] hash = MessageDigest.getInstance("SHA-256").digest(a.getBytes());
+			return HexFormat.of().formatHex(hash);
+		} catch (NoSuchAlgorithmException e) {
+			// 处理异常，例如抛出运行时异常或者返回默认值
+			throw new RuntimeException("SHA-256 algorithm not found", e);
+		}
 	}
 
 	public static User findUserById(int id) throws SQLException {
@@ -30,8 +35,9 @@ public class UserDB {
 				rs.getString("tel"),
 				rs.getString("adress"),
 				rs.getString("email"),
-				rs.getString("mot_de_passe")
-			);
+				rs.getString("mot_de_passe"),
+				rs.getString("gender"),
+				rs.getString("date_de_naissance"));
 			user.setPanier(PanierBD.loadPanierByUser(user)) ;
 			return user;
 		}
@@ -45,7 +51,17 @@ public class UserDB {
 		ps.setString(2, hash(mdp));
 		ResultSet rs = ps.executeQuery();
 		if(rs.next()) {
-			return new User(rs.getInt("Id_user"),rs.getString("lastname"),rs.getString("name"),null, null, null, email, mdp);
+			User user = new User(rs.getInt("Id_user"),
+					rs.getString("lastname"),
+					rs.getString("name"),
+					rs.getString("tel"),
+					rs.getString("adress"),
+					rs.getString("email"),
+					mdp,
+					rs.getString("gender"),
+					rs.getString("date_de_naissance"));
+			user.setPanier(PanierBD.loadPanierByUser(user)) ;
+			return user;
 		}
 		return null;
 	}

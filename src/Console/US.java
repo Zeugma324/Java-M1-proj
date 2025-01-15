@@ -6,11 +6,16 @@ import Objects.Produit;
 import Objects.User;
 import connexion.Connect;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static BD_Connect.ProduitBD.catAndId_cat;
+import static Managers.ProduitManager.*;
 import static Managers.UserManager.*;
 
 public class US {
@@ -29,8 +34,8 @@ public class US {
             System.out.println("Rating        : " + prod.getRating());
             System.out.println("Prix remisé   : " + prod.getDiscount_price());
             System.out.println("Prix de base  : " + prod.getActual_price());
-            System.out.println("Catégorie     : " + prod.getSub_category() 
-                                             + " (" + prod.getMain_category() + ")");
+            System.out.println("Catégorie     : " + prod.getSub_category()
+                    + " (" + prod.getMain_category() + ")");
             System.out.println("========================================");
         }
     }
@@ -95,9 +100,9 @@ public class US {
 
         // Tri (US 0.4)
         liste.stream()
-             .sorted(selectComparator())
+                .sorted(selectComparator())
                 .limit(10)
-             .forEach(System.out::println);
+                .forEach(System.out::println);
         Connect.closeConnexion();
         return liste;
     }
@@ -125,13 +130,13 @@ public class US {
 
         Comparator<Produit> comparator;
         switch (trier) {
-            case "1": 
+            case "1":
                 comparator = Comparator.comparing(Produit::getLibelle);
                 break;
-            case "2": 
+            case "2":
                 comparator = Comparator.comparingDouble(Produit::getRating);
                 break;
-            case "3": 
+            case "3":
                 comparator = Comparator.comparingInt(Produit::getDiscount_price);
                 break;
             default:
@@ -145,15 +150,15 @@ public class US {
         return comparator;
     }
 
-   
+
     // =========================
     // US 7 - Définir les users VIP
     // =========================
     public static void VIPusers() throws SQLException {
         String sql = "SELECT Id_user FROM panier " +
-                     "JOIN PanierCommande ON panier.Id_panier = PanierCommande.panier_id " +
-                     "GROUP BY panier.Id_user " +
-                     "HAVING COUNT(Id_commande) > 5";
+                "JOIN PanierCommande ON panier.Id_panier = PanierCommande.panier_id " +
+                "GROUP BY panier.Id_user " +
+                "HAVING COUNT(Id_commande) > 5";
 
         ResultSet result = Connect.executeQuery(sql);
         System.out.println("Utilisateurs VIP (plus de 5 commandes) :");
@@ -169,13 +174,13 @@ public class US {
     // =========================
     public static void AVGTempRealiserPanier() throws SQLException {
         String sql = "SELECT AVG(TIMESTAMPDIFF(DAY, Date_debut, Date_fin)) AS TempMoyenP " +
-                     "FROM panier WHERE Date_fin IS NOT NULL";
+                "FROM panier WHERE Date_fin IS NOT NULL";
 
         ResultSet result = Connect.executeQuery(sql);
         if (result.next()) {
             double AVGTempDays = result.getDouble("TempMoyenP");
-            System.out.println("Temps moyen de réalisation d'un panier : " 
-                               + AVGTempDays + " jours");
+            System.out.println("Temps moyen de réalisation d'un panier : "
+                    + AVGTempDays + " jours");
         } else {
             System.out.println("Aucun panier finalisé trouvé.");
         }
@@ -187,22 +192,23 @@ public class US {
     // =========================
     public static void AVGTempPrepareCom() throws SQLException {
         String sql = "SELECT AVG(TIMESTAMPDIFF(DAY, L.date_livrasion, P.Date_fin)) AS TempMoyenC " +
-                     "FROM panier P " +
-                     "JOIN PanierCommande PC ON P.Id_panier = PC.panier_id " +
-                     "JOIN livrasion L ON L.id_commande = PC.Id_commande " +
-                     "WHERE P.Date_fin IS NOT NULL " +
-                     "AND L.date_livrasion IS NOT NULL";
+                "FROM panier P " +
+                "JOIN PanierCommande PC ON P.Id_panier = PC.panier_id " +
+                "JOIN livrasion L ON L.id_commande = PC.Id_commande " +
+                "WHERE P.Date_fin IS NOT NULL " +
+                "AND L.date_livrasion IS NOT NULL";
 
         ResultSet result = Connect.executeQuery(sql);
         if (result.next()) {
             double AVGTempDays = result.getDouble("TempMoyenC");
-            System.out.println("Temps moyen de préparation des commandes : " 
-                               + AVGTempDays + " jours");
+            System.out.println("Temps moyen de préparation des commandes : "
+                    + AVGTempDays + " jours");
         } else {
             System.out.println("Aucune commande livrée trouvée.");
         }
         Connect.closeConnexion();
     }
+
     //STATS
     public static void averagePriceByCategory() throws SQLException {
         // Requête : on joint la table produit et la table categories
@@ -210,15 +216,15 @@ public class US {
         // On calcule ensuite la moyenne des prix (discount_price) par catégorie.
 
         String sql = """
-            SELECT c.id_cat,
-                   c.sub_category,
-                   c.main_category,
-                   AVG(p.discount_price) AS avg_discount_price
-            FROM produit p
-            JOIN categories c ON p.category = c.id_cat
-            GROUP BY c.id_cat, c.sub_category, c.main_category
-            ORDER BY id_cat ASC
-            """;
+                SELECT c.id_cat,
+                       c.sub_category,
+                       c.main_category,
+                       AVG(p.discount_price) AS avg_discount_price
+                FROM produit p
+                JOIN categories c ON p.category = c.id_cat
+                GROUP BY c.id_cat, c.sub_category, c.main_category
+                ORDER BY id_cat ASC
+                """;
 
         ResultSet rs = Connect.executeQuery(sql);
 
@@ -230,26 +236,26 @@ public class US {
             double avgPrice = rs.getDouble("avg_discount_price");
 
             System.out.printf("Catégorie #%d | %s (%s) | Prix moyen : %.2f\n",
-                              idCat, subCat, mainCat, avgPrice);
+                    idCat, subCat, mainCat, avgPrice);
         }
         Connect.closeConnexion();
     }
 
 // STATS
-    
+
     public static void compareRatingAcrossCategories() throws SQLException {
         // Requête : note (ratings) moyenne par catégorie
         String sql = """
-            SELECT c.id_cat,
-                   c.sub_category,
-                   c.main_category,
-                   AVG(p.ratings) AS avg_rating,
-                   COUNT(p.id_produit) AS nb_produits
-            FROM produit p
-            JOIN categories c ON p.category = c.id_cat
-            GROUP BY c.id_cat, c.sub_category, c.main_category
-            ORDER BY id_cat DESC
-            """;
+                SELECT c.id_cat,
+                       c.sub_category,
+                       c.main_category,
+                       AVG(p.ratings) AS avg_rating,
+                       COUNT(p.id_produit) AS nb_produits
+                FROM produit p
+                JOIN categories c ON p.category = c.id_cat
+                GROUP BY c.id_cat, c.sub_category, c.main_category
+                ORDER BY id_cat DESC
+                """;
 
         ResultSet rs = Connect.executeQuery(sql);
 
@@ -262,8 +268,8 @@ public class US {
             int nbProduits = rs.getInt("nb_produits");
 
             System.out.printf(
-                "Catégorie #%d | %s (%s) | Note moyenne : %.2f (sur %d produits)\n",
-                idCat, subCat, mainCat, avgRating, nbProduits
+                    "Catégorie #%d | %s (%s) | Note moyenne : %.2f (sur %d produits)\n",
+                    idCat, subCat, mainCat, avgRating, nbProduits
             );
         }
         Connect.closeConnexion();
@@ -280,28 +286,27 @@ public class US {
 
     //2.2 Je veux consulter mes habitudes de consommation (bio, nutriscore, catégorie de produits, marques).
     public static void affichierHabitudes(User user) throws SQLException {
-        System.out.println("Résumé des habitudes de consommation :");
+        System.out.println("==== habitudes des consommations : =====");
         HashMap<Produit, Integer> produits = historyPanier(user);
-        System.out.println("produits");
         ArrayList<String> category_habits = calculateCategoryHabitude(produits);
-
         String discount_habit = calculateDiscountHabitude(produits);
-
         String popularity_habit = calculatePopularityHabitude(produits);
 
-
-        System.out.println("Catégories préférées :");
+        System.out.println("======== Catégories préférées : ========");
         category_habits.forEach(System.out::println);
 
+        System.out.println("========================================");
         System.out.println("Discount préféré :" + discount_habit);
+        System.out.println("========================================");
         System.out.println("Popularité préférée :" + popularity_habit);
+        System.out.println("========================================");
     }
 
     //US 2.3
     public static ArrayList<Produit> faireRecommandation(User user) throws SQLException {
         Scanner scanner = new Scanner(System.in);
         boolean[] preference = validerHabitudes(user);
-        HashMap<Produit, Integer> produits_history= historyPanier(user);
+        HashMap<Produit, Integer> produits_history = historyPanier(user);
         ArrayList<String> excluded_subCategories = new ArrayList<>();
 
         produits_history.keySet().stream()
@@ -312,7 +317,7 @@ public class US {
         String discount = calculateDiscountHabitude(produits_history);
         String popularity = calculatePopularityHabitude(produits_history);
 
-        ArrayList<Produit> toutLesProduitsPossible = listDeProduitsDansCategory(produits_history,user);
+        ArrayList<Produit> toutLesProduitsPossible = listDeProduitsDansCategory(produits_history, user);
         Map<Produit, Integer> scoreMap = toutLesProduitsPossible.stream()
                 .collect(Collectors.toMap(prod -> prod, prod -> {
                     try {
@@ -322,24 +327,108 @@ public class US {
                         return 0;
                     }
                 }));
-        scoreMap.entrySet().stream().forEach(e -> {System.out.println(e.getKey().getId() + " : " + e.getValue());});
+        scoreMap.entrySet().stream().forEach(e -> {
+            System.out.println(e.getKey().getId() + " : " + e.getValue());
+        });
         toutLesProduitsPossible.stream()
                 .sorted((p1, p2) -> scoreMap.get(p2) - scoreMap.get(p1))
-                .filter(prod -> ! excluded_subCategories.contains(prod.getSub_category()))
+                .filter(prod -> !excluded_subCategories.contains(prod.getSub_category()))
                 .limit(15)
                 .forEach(System.out::println);
 
         return toutLesProduitsPossible;
     }
 
+    //US 3.1. Je veux importer automatiquement des produits afin de mettre à jour mon catalogue produit.
+    //Le csv est dans le dossier data.
+    public static void importerProduit(String name_csv) throws SQLException, IOException {
+        String csvFile = "src/data/" + name_csv + ".csv";
+        char separator = ',';
+        StringBuilder query = new StringBuilder();
+        query.append("INSERT INTO produit(name, ratings, no_of_ratings, discount_price, actual_price, category) VALUES ");
+        ArrayList<String[]> produitList = new ArrayList<>();
+
+        for (String line : Files.readAllLines(Paths.get(csvFile))) {
+            String[] data = line.split(String.valueOf(separator));
+            produitList.add(data);
+        }
+
+        produitList.forEach(produit -> {
+            try {
+                String libelle = produit[0];
+                String main_category = produit[1];
+                String sub_category = produit[2];
+                double rating = Double.parseDouble(produit[3]);
+                int no_of_ratings = Integer.parseInt(produit[4]);
+                int discount_price = Integer.parseInt(produit[5]);
+                int actual_price = Integer.parseInt(produit[6]);
+
+                // check if category already exist
+                int category;
+                if (catAndId_cat.containsKey(sub_category)) {
+                    category = catAndId_cat.get(sub_category);
+                } else {
+                    // new category insert into table category
+                    category = catAndId_cat.size() + 1;
+                    catAndId_cat.put(sub_category, category);
+
+                    String insertCategoryQuery = String.format(
+                            "INSERT INTO categories (Id_cat, main_category, sub_category) VALUES (%d, '%s', '%s')",
+                            category, main_category, sub_category);
+                    Connect.executeUpdate(insertCategoryQuery);
+                }
+
+                // ecrit un quand query donc on peux faire tout les insert dan 1 grand query.
+                query.append(String.format("('%s', %.2f, %d, %d, %d, %d), ",
+                        libelle, rating, no_of_ratings, discount_price, actual_price, category));
+            } catch (Exception e) {
+                System.err.println("错误解析行: " + String.join(",", produit));
+                e.printStackTrace();
+            }
+        });
+
+        query.delete(query.length() - 2, query.length());
+        query.append(';');
+        Connect.executeUpdate(query.toString());
+        Connect.closeConnexion();
+    }
+
+    //US 3.5
+    public static void consulterProduit(Produit produit) throws SQLException {
+        HashMap<User,Integer> consulterUserParProduit = consulterUserParProduit(produit);
+        HashMap<String,Integer> agePercentage = groupUserParAge(consulterUserParProduit);
+        HashMap<String,Integer> genderPercentage = groupUserParGender(consulterUserParProduit);
+        HashMap<String,Integer> zodiaquePercentage = groupUserParZodiaque(consulterUserParProduit);
+        System.out.println("========================================");
+        System.out.println("Consulter produit : " + produit.getLibelle());
+        System.out.println(" Répartition selon les groupes d'âge :");
+        agePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.printf("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
+
+        System.out.println("Répartition hommes/femmes :");
+        genderPercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
+
+        System.out.println("Répartition selon les signes du zodiaque :");
+        zodiaquePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
+    }
+
+
+
+
     public static void main(String[] args) throws SQLException {
 //        AfficherProduitFrequents(UserDB.findUserById(1),5);
 //        US.affichierHabitudes(UserDB.findUserById(1));
 
-        faireRecommandation(UserDB.findUserById(1));
-    }
+//        faireRecommandation(UserDB.findUserById(1));
 
     }
+
+}
     
 
 

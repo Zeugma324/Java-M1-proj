@@ -14,29 +14,7 @@ import static BD_Connect.ProduitBD.*;
 
 
 public class UserManager {
-    // US2.1. Je veux consulter la liste des produits que je commande le plus fréquemment.
-//    public static ArrayList<Produit> AfficherProduitFrequents(User user, int limit) throws SQLException {
-//        String query = String.format("SELECT p.name, p.actual_price, COUNT(pa.id_produit) AS purchase_count " +
-//                "FROM panier pa " +
-//                "JOIN produit p ON pa.id_produit = p.id_produit " +
-//                "WHERE pa.id_user = '%s' GROUP BY pa.id_produit " +
-//                "ORDER BY purchase_count DESC ", user.getIdUser());
-//
-//        ResultSet result = Connect.executeQuery(query);
-//
-//        ArrayList<Produit> produits = new ArrayList<>();
-//        if (!result.next()) {
-//            System.out.println("No frequent products found for this user.");
-//        } else {
-//            while (result.next()) {
-//                produits.add(ProduitBD.loadProduit(result.getInt("id_produit")));
-//            }
-//        }
-//        produits.stream()
-//                .limit(limit)
-//                .forEach(produit -> System.out.println("ID : " + produit.getId() + " Libelle : " + produit.getLibelle()));
-//        return produits;
-//    }
+
     // US2.1. Je veux consulter la liste des produits que je commande le plus fréquemment.
     public static ArrayList<Produit> AfficherProduitFrequents(User user, int limit) throws SQLException {
         HashMap<Produit, Integer> produits = historyPanier(user);
@@ -51,6 +29,55 @@ public class UserManager {
 
     //US 2.2 Je veux consulter mes habitudes de consommation (bio, nutriscore, catégorie de produits, marques).
     // En fact nour consulter les habitudes par categorie/discountrate/popularity
+    public static void affichierHabitudes(User user) throws SQLException {
+        System.out.println("==== habitudes des consommations : =====");
+        HashMap<Produit, Integer> produits = historyPanier(user);
+        ArrayList<String> category_habits = calculateCategoryHabitude(produits);
+        String discount_habit = calculateDiscountHabitude(produits);
+        String popularity_habit = calculatePopularityHabitude(produits);
+
+        System.out.println("======== Catégories préférées : ========");
+        category_habits.forEach(System.out::println);
+
+        System.out.println("========================================");
+        System.out.println("Discount préféré :" + discount_habit);
+        System.out.println("========================================");
+        System.out.println("Popularité préférée :" + popularity_habit);
+        System.out.println("========================================");
+    }
+
+    // US2.3 Je veux valider les préférences que me propose le système afin d'avoir des produits de remplacements
+    // qui correspondent mieux à mes habitudes.
+    public static boolean[] validerHabitudes(User user) throws SQLException {
+        affichierHabitudes(user);
+
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("La catégorie correspond-elle à vos préférences ? (1. Oui, 2. Non)");
+        Boolean category = getBooleanPreference(scanner);
+
+        System.out.println("Le discount correspond-il à vos préférences ? (1. Oui, 2. Non)");
+        Boolean discount = getBooleanPreference(scanner);
+
+        System.out.println("La popularité correspond-elle à vos préférences ? (1. Oui, 2. Non)");
+        Boolean popular = getBooleanPreference(scanner);
+
+        return new boolean[]{category, discount, popular};
+    }
+
+    //US 3.5
+    //Je veux consulter les différents profils de consommateurs.
+    public static void afficherUtilisateur (User user) throws SQLException {
+        System.out.println("====== Information du Utilisateur ======");
+        System.out.println("ID            : " + user.getIdUser());
+        System.out.println("Nom           : " + user.getLastname() + "·" + user.getName());
+        System.out.println("Tel           : " + user.getTel());
+        System.out.println("Adress        : " + user.getAddress());
+        System.out.println("E_mail        : " + user.getEmail());
+        System.out.println("========================================");
+        affichierHabitudes(user);
+    }
+
     public static HashMap<Produit, Integer> historyPanier(User user) throws SQLException {
         String query = String.format("SELECT p.id_produit, p.name,p.ratings,p.no_of_ratings,p.discount_price, p.actual_price, p.category, qte_produit " +
                 "FROM panier pa JOIN produit p on pa.id_produit = p.id_produit " +
@@ -73,16 +100,6 @@ public class UserManager {
         return produits;
     }
 
-    public static int calculateMedian(List<Produit> produits) {
-        List<Integer> ratings = produits.stream()
-                .map(Produit::getNo_of_ratings)
-                .filter(Objects::nonNull)
-                .sorted()
-                .collect(Collectors.toList());
-        int size = ratings.size();
-        if (size == 0) return 0;
-        return ratings.get(size / 2);
-    }
 
     public static ArrayList<String> calculateCategoryHabitude(HashMap<Produit, Integer> produits) {
         HashMap<String, Integer> category_habitude = new HashMap<>();
@@ -156,40 +173,6 @@ public class UserManager {
         return popularity_habitude.keySet().iterator().next();
     }
 
-    public static void affichierHabitudes(User user) throws SQLException {
-        System.out.println("Résumé des habitudes de consommation :");
-        HashMap<Produit, Integer> produits = historyPanier(user);
-        ArrayList<String> category_habits = calculateCategoryHabitude(produits);
-        String discount_habit = calculateDiscountHabitude(produits);
-        String popularity_habit = calculatePopularityHabitude(produits);
-
-        System.out.println("Catégories préférées :");
-        category_habits.forEach(System.out::println);
-
-        System.out.println("Discount préféré :");
-        System.out.println(discount_habit);
-        System.out.println("Popularité préférée :");
-        System.out.println(popularity_habit);
-    }
-
-    // US2.3 Je veux valider les préférences que me propose le système afin d'avoir des produits de remplacements
-    // qui correspondent mieux à mes habitudes.
-    public static boolean[] validerHabitudes(User user) throws SQLException {
-        affichierHabitudes(user);
-
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("La catégorie correspond-elle à vos préférences ? (1. Oui, 2. Non)");
-        Boolean category = getBooleanPreference(scanner);
-
-        System.out.println("Le discount correspond-il à vos préférences ? (1. Oui, 2. Non)");
-        Boolean discount = getBooleanPreference(scanner);
-
-        System.out.println("La popularité correspond-elle à vos préférences ? (1. Oui, 2. Non)");
-        Boolean popular = getBooleanPreference(scanner);
-
-        return new boolean[]{category, discount, popular};
-    }
 
     private static boolean getBooleanPreference(Scanner scanner) {
         while (true) {
@@ -273,74 +256,6 @@ public class UserManager {
             }
         };
     }
-
-//    public static int compairingScore(Produit prod, boolean[] preference, ArrayList<String> categories, String discount,String popularity) throws SQLException {
-//        Boolean cat = preference[0];
-//        Boolean disc = preference[1];
-//        Boolean pop = preference[2];
-//
-//        Boolean toutnon = (!cat && !disc && !pop);
-//        // if user think all the preferences I analysed is wrong we use the defalt method
-//
-//
-//        int score = 0;
-//        if(cat||toutnon) {
-//            for( int i = Math.min(3,categories.size()); i > 0; i--) {
-//                score += i;
-//            }
-//        }
-//
-//        int max;
-//        int min;
-//        switch(discount){
-//            case "100%-90%" -> {
-//                max = 100;
-//                min = 90;
-//            }
-//            case "90%-80%" -> {
-//                max = 90;
-//                min = 80;
-//            }
-//            case "80%-70%" -> {
-//                max = 80;
-//                min = 70;
-//            }
-//            default -> {
-//                max = 70;
-//                min = 0;
-//            }
-//        }
-//        if(disc || toutnon) {
-//            if (prod.getDiscount_rate() > max) {
-//                score += (prod.getDiscount_rate() - max) + 10;
-//            } else if (prod.getDiscount_rate() < min) {
-//                score += (min - prod.getDiscount_rate()) + 10;
-//            } else{
-//                score += 15;
-//            }
-//        }
-//        if (pop || toutnon) {
-//            int avgNoOfRatings = ProduitBD.mainCatAndAvgNoRating.getOrDefault(prod.getMain_category(), 0);
-//            switch (popularity) {
-//                case "populaire" -> {
-//                    if (prod.getNo_of_ratings() > avgNoOfRatings) {
-//                        score += 10;
-//                    } else {
-//                        score -= 10;
-//                    }
-//                }
-//                case "rare" -> {
-//                    if (prod.getNo_of_ratings() > avgNoOfRatings) {
-//                        score -= 10;
-//                    } else {
-//                        score += 10;
-//                    }
-//                }
-//            }
-//        }
-//        return Math.max(0, score);
-//
-//    }
 
     public static int compairingScore(Produit prod, boolean[] preference, ArrayList<String> categories, String discount, String popularity) throws SQLException {
         boolean cat = preference[0];

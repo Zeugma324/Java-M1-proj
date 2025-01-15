@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
+import BD_Connect.PanierBD;
 import BD_Connect.ProduitBD;
 import Objects.*;
 import connexion.Connect;
@@ -95,30 +96,7 @@ public class ProduitManager {
                 .forEach(produit -> produits.add(produit));
         return produits;
     }
-//    //US 0.4 - Trier un produit par quelque chose
-//    public static void trierProduits(int idCat) throws SQLException {
-//        String query = "SELECT produit.id_produit " +
-//                "FROM produit " +
-//                "JOIN categories ON produit.category = categories.Id_cat " +
-//                "WHERE categories.Id_cat = " + idCat ;
-//        ResultSet result = Connect.executeQuery(query);
-//        ArrayList<Integer> ids = new ArrayList<>();
-//        while(result.next()) {
-//            ids.add(result.getInt("id_produit"));
-//        }
-//
-//        ids.stream()
-//                .map(id -> {
-//                    try {
-//                        return findProduit(id);
-//                    } catch (SQLException e) {
-//                        throw new RuntimeException(e);
-//                    }
-//                })
-//                .sorted(selectComparator())
-//                .forEach(produit -> System.out.println(produit));
-//
-//    }
+
     public static Comparator<Produit> selectComparator(){
 
         System.out.println("Choisissez un champ de tri (1.libelle, 2.rating, 3.price) :");
@@ -167,7 +145,7 @@ public class ProduitManager {
         }
     }
 
-    //US 3.6. Je veux importer automatiquement des produits afin de mettre à jour mon catalogue produit.
+    //US 3.1. Je veux importer automatiquement des produits afin de mettre à jour mon catalogue produit.
     //Le csv est dans le dossier data.
     public static void importerProduit(String name_csv) throws SQLException, IOException {
         String csvFile = "src/data/" + name_csv + ".csv";
@@ -210,7 +188,6 @@ public class ProduitManager {
                 query.append(String.format("('%s', %.2f, %d, %d, %d, %d), ",
                         libelle, rating, no_of_ratings, discount_price, actual_price, category));
             } catch (Exception e) {
-                System.err.println("错误解析行: " + String.join(",", produit));
                 e.printStackTrace();
             }
         });
@@ -219,5 +196,120 @@ public class ProduitManager {
         query.append(';');
         Connect.executeUpdate(query.toString());
         Connect.closeConnexion();
+    }
+
+    //Je veux consulter les différents profils de consommateurs.
+    public static void consulterProduit(Produit produit) throws SQLException {
+        HashMap<User,Integer> consulterUserParProduit = consulterUserParProduit(produit);
+        HashMap<String,Integer> agePercentage = groupUserParAge(consulterUserParProduit);
+        HashMap<String,Integer> genderPercentage = groupUserParGender(consulterUserParProduit);
+        HashMap<String,Integer> zodiaquePercentage = groupUserParZodiaque(consulterUserParProduit);
+        System.out.println("========================================");
+        System.out.println("Consulter produit : " + produit.getLibelle());
+        System.out.println(" Répartition selon les groupes d'âge :");
+        agePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.printf("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
+
+        System.out.println("Répartition hommes/femmes :");
+        genderPercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
+
+        System.out.println("Répartition selon les signes du zodiaque :");
+        zodiaquePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
+    }
+
+
+    public static HashMap<User,Integer> consulterUserParProduit(Produit produit) throws SQLException {
+        String query =  "SELECT u.id_user, u.lastname, u.name, u.tel, u.adress, u.email, u.mot_de_passe, u.gender, u.date_de_naissance, p.qte_produit " +
+                "FROM utilisateur u JOIN panier p on u.id_produit = p.id_produit "+
+                "WHERE p.id_produit = " + produit.getId() + " "
+                +"AND Date_fin NOT NULL ; ";
+        ResultSet rs = Connect.executeQuery(query);
+        HashMap<User,Integer> usersAndQteAchat = new HashMap<>();
+        while (rs.next()) {
+            User user = new User(
+                    rs.getInt("id_user"),
+                    rs.getString("lastname"),
+                    rs.getString("name"),
+                    rs.getString("tel"),
+                    rs.getString("adress"),
+                    rs.getString("email"),
+                    rs.getString("mot_de_passe"),
+                    rs.getString("gender"),
+                    rs.getString("date_de_naissance"));
+            user.setPanier(PanierBD.loadPanierByUser(user)) ;
+            int qteAchat = rs.getInt("qte_produit");
+            usersAndQteAchat.put(user, usersAndQteAchat.getOrDefault(user, 0) + qteAchat);
+        }
+        return usersAndQteAchat;
+    }
+
+    public static HashMap<String, Integer> groupUserParAge(HashMap<User,Integer> usersAndQteAchat) throws SQLException {
+        HashMap<String, Integer> userAgeAndQte = new HashMap<>();
+        usersAndQteAchat.entrySet().stream()
+                .forEach(entry ->{
+                    int age = entry.getKey().getAge();
+                    int qte = entry.getValue();
+                    String ageGroup = "";
+                    if (age <= 18 && age > 0){
+                        ageGroup = "<18";
+                    }else if(age <=25){
+                        ageGroup = "18-25";
+                    }else if(age <= 35){
+                        ageGroup = "25-35";
+                    }else if(age <= 50){
+                        ageGroup = "35-50";
+                    }else if(age <= 75){
+                        ageGroup = "50-75";
+                    }else{
+                        ageGroup = ">75";
+                    }
+                    userAgeAndQte.put(ageGroup,userAgeAndQte.getOrDefault(ageGroup,0)+qte);
+                });
+        int amount_total = userAgeAndQte.values().stream().mapToInt(Integer::intValue).sum();
+        HashMap<String, Integer> percentageMap = new HashMap<>();
+        userAgeAndQte.forEach((key, value) -> {
+            int percentage = value * 100 / amount_total;
+            percentageMap.put(key, percentage);
+        });
+        return percentageMap;
+    }
+
+    public static HashMap<String, Integer> groupUserParGender(HashMap<User,Integer> usersAndQteAchat) throws SQLException {
+        HashMap<String, Integer> userGenderAndQte = new HashMap<>();
+        usersAndQteAchat.entrySet().stream()
+                .forEach(entry ->{
+                    String gender = entry.getKey().getGender();
+                    int qte = entry.getValue();
+                    userGenderAndQte.put(entry.getKey().getGender(), userGenderAndQte.getOrDefault(entry.getKey().getGender(), 0) + qte);
+                });
+        int amount_total = userGenderAndQte.values().stream().mapToInt(Integer::intValue).sum();
+        HashMap<String, Integer> percentageMap = new HashMap<>();
+        userGenderAndQte.forEach((key, value) -> {
+            int percentage = value * 100 / amount_total;
+            percentageMap.put(key, percentage);
+        });
+        return percentageMap;
+    }
+
+    public static HashMap<String,Integer> groupUserParZodiaque(HashMap<User,Integer> usersAndQteAchat) throws SQLException {
+        HashMap<String, Integer> userZodiaqueAndQte = new HashMap<>();
+        usersAndQteAchat.entrySet().stream()
+                .forEach(entry ->{
+                    String zodiaque = entry.getKey().getZodiaque();
+                    int qte = entry.getValue();
+                    userZodiaqueAndQte.put(entry.getKey().getZodiaque(), userZodiaqueAndQte.getOrDefault(entry.getKey().getZodiaque(), 0) + qte);
+                });
+        int amount_total = userZodiaqueAndQte.values().stream().mapToInt(Integer::intValue).sum();
+        HashMap<String, Integer> percentageMap = new HashMap<>();
+        userZodiaqueAndQte.forEach((key, value) -> {
+            int percentage = value * 100 / amount_total;
+            percentageMap.put(key, percentage);
+        });
+        return percentageMap;
     }
 }
