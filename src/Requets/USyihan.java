@@ -169,17 +169,15 @@ public class USyihan {
 
     //US4.3
     //11.finaliser la préparation d'une commande
-    public static void FinalPreparation() throws SQLException{
-        String sql = "SELECT id_commande FROM livrasion WHERE date_livrasion IS NOT NULL";
+    public static void FinalPreparation(int commandeID) throws SQLException{
+        String sql = "SELECT id_commande FROM livrasion WHERE date_livrasion IS NOT NULL AND id_commande = " + commandeID ;
 
         ResultSet result = Connect.executeQuery(sql);
 
         if (result.next()){
-            int commandeID = result.getInt("Id_commande");
-
             System.out.println("Commande ID: " + commandeID +" Préparation terminée ");
         }else{
-            System.out.println("Trouvée pas le commande avec date de livraison.");
+            System.out.println("La préparation n'est pas fini");
 
         }
         Connect.closeConnexion();
@@ -256,7 +254,9 @@ public class USyihan {
                     CatPlusChoisirParUser();
                 }
                 case 11 -> {
-                    FinalPreparation();
+                    System.out.print("Entrez l'ID commmande : ");
+                    int commandeID = scanner.nextInt();
+                    FinalPreparation(commandeID);
                 }
 
                 case 12 -> {
