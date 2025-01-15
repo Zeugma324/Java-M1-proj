@@ -15,10 +15,14 @@ public class User {
 	private String email;
 	private String mdp;
 	private String gender;
-	private LocalDate birthday;
-	private int age = Period.between(birthday, LocalDate.now()).getYears();
-	private String zodiaque = calculateZodiacSign(this.birthday);
-	
+	private String birthday;
+	private Integer age;
+	private String zodiaque;
+
+	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+	LocalDate date_naissance;
+
+
 	public User(int idUser,
 				String lastname,
 				String name,
@@ -38,12 +42,23 @@ public class User {
 		this.email = email;
 		this.mdp = hash(mdp);
 		this.gender = gender;
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-		this.birthday = LocalDate.parse(birthday, formatter);
+		this.birthday = birthday;
+
+			if (this.birthday != null && !this.birthday.isEmpty()) {
+			this.date_naissance = LocalDate.parse(this.birthday, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+			this.zodiaque = calculateZodiacSign(this.birthday);
+		}
 	}
 
-	public User(int idUser, String lastname, String name, String tel, String address, String email,
-				String mdp,String gender, String birthday)  {
+	public User(int idUser,
+				String lastname,
+				String name,
+				String tel,
+				String address,
+				String email,
+				String mdp,
+				String gender,
+				String birthday) {
 		this.idUser = idUser;
 		this.lastname = lastname;
 		this.name = name;
@@ -52,13 +67,21 @@ public class User {
 		this.email = email;
 		this.mdp = hash(mdp);
 		this.gender = gender;
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-		this.birthday = LocalDate.parse(birthday, formatter);
+		this.birthday = birthday;
+
+		if (this.birthday != null && !this.birthday.isEmpty()) {
+			this.date_naissance = LocalDate.parse(this.birthday, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+			this.zodiaque = calculateZodiacSign(this.birthday);
+		}
 	}
 
-	public static String calculateZodiacSign(LocalDate birthday) {
-		int day = birthday.getDayOfMonth();
-		Month month = birthday.getMonth();
+	public static String calculateZodiacSign(String birthday) {
+		if (birthday == null || birthday.isEmpty()) {
+			return null; // 或者返回一个默认值
+		}
+		LocalDate date_naissance = LocalDate.parse(birthday, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+		int day = date_naissance.getDayOfMonth();
+		Month month = date_naissance.getMonth();
 
 		switch (month) {
 			case JANUARY:
@@ -107,18 +130,22 @@ public class User {
 	}
 
 	public int getAge() {
-		return age;
+		if (age == null && this.date_naissance != null) {
+			this.age = Period.between(this.date_naissance, LocalDate.now()).getYears();
+		}
+		return age == null ? 0 : age;
 	}
+
 
 	public void setAge(int age) {
 		this.age = age;
 	}
 
-	public LocalDate getBirthday() {
+	public String getBirthday() {
 		return birthday;
 	}
 
-	public void setBirthday(LocalDate birthday) {
+	public void setBirthday(String birthday) {
 		this.birthday = birthday;
 	}
 
@@ -191,7 +218,7 @@ public class User {
 	@Override
 	public String toString() {
 		return "User [idUser=" + idUser + ", lastname=" + lastname + ", name=" + name + ", tel=" + tel + ", address="
-				+ address + ", panier=" + panier + ", email=" + email + ", mdp=" + mdp + "]";
+				+ address + ", email=" + email + "]";
 	}
 	
 }

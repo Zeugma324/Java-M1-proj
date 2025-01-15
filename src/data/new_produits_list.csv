@@ -1,1 +1,2 @@
-name,main_category,sub_category,image,link,ratings,no_of_ratings,discount_price,actual_price
+name,main_category,sub_category,ratings,no_of_ratings,discount_price,actual_price
+abc air conditioner,appliances,Air Conditioners,5.0,12225,300,500

@@ -154,8 +154,17 @@ public class ProduitManager {
         query.append("INSERT INTO produit(name, ratings, no_of_ratings, discount_price, actual_price, category) VALUES ");
         ArrayList<String[]> produitList = new ArrayList<>();
 
+        boolean isFirstLine = true;
         for (String line : Files.readAllLines(Paths.get(csvFile))) {
+            if (isFirstLine) {
+                isFirstLine = false; // 跳过标题行
+                continue;
+            }
             String[] data = line.split(String.valueOf(separator));
+            if (data.length != 7) { // 确保列数为 7
+                System.err.println("Invalid data: " + Arrays.toString(data));
+                continue;
+            }
             produitList.add(data);
         }
 
@@ -169,12 +178,10 @@ public class ProduitManager {
                 int discount_price = Integer.parseInt(produit[5]);
                 int actual_price = Integer.parseInt(produit[6]);
 
-                // check if category already exist
                 int category;
                 if (catAndId_cat.containsKey(sub_category)) {
                     category = catAndId_cat.get(sub_category);
                 } else {
-                    // new category insert into table category
                     category = catAndId_cat.size() + 1;
                     catAndId_cat.put(sub_category, category);
 
@@ -184,19 +191,22 @@ public class ProduitManager {
                     Connect.executeUpdate(insertCategoryQuery);
                 }
 
-                // ecrit un quand query donc on peux faire tout les insert dan 1 grand query.
-                query.append(String.format("('%s', %.2f, %d, %d, %d, %d), ",
+                query.append(String.format(Locale.US,"('%s', %.1f, %d, %d, %d, %d), ",
                         libelle, rating, no_of_ratings, discount_price, actual_price, category));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
 
-        query.delete(query.length() - 2, query.length());
+        if (query.charAt(query.length() - 2) == ',') {
+            query.delete(query.length() - 2, query.length()); // 移除最后的逗号
+        }
         query.append(';');
         Connect.executeUpdate(query.toString());
+//        System.out.println(query);
         Connect.closeConnexion();
     }
+
 
     //Je veux consulter les différents profils de consommateurs.
     public static void consulterProduit(Produit produit) throws SQLException {
@@ -311,5 +321,8 @@ public class ProduitManager {
             percentageMap.put(key, percentage);
         });
         return percentageMap;
+    }
+    public static void main(String[] args) throws SQLException, IOException {
+        importerProduit("new_produits_list");
     }
 }

@@ -3,12 +3,17 @@ package BD_Connect;
 import Objects.*;
 import connexion.Connect;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static BD_Connect.ProduitBD.catAndId_cat;
 
 public class PanierBD {
 
@@ -102,47 +107,73 @@ public class PanierBD {
         Connect.executeUpdate(str_association_table);
     }
 
-    public void getReplacment(Panier panier,Produit prd) throws SQLException {
-        removeProduitFromPanier(panier,prd);
-        List<Produit> base_list = new ArrayList<>();
-        TreeMap<String, Integer> cat_map = new TreeMap<>();
-        String str = "SELECT * " +
-                "FROM panier pa JOIN produit p ON pa.Id_produit = p.Id_produit " +
-                "JOIN categories c ON p.category = c.Id_cat " +
-                "WHERE pa.Id_user = " + panier.getUser().getIdUser() + " AND pa.Date_fin IS NOT NULL";
-        ResultSet res = Connect.executeQuery(str);
-        while (res.next()) {
-            Produit prod = new Produit(res.getInt("Id_produit"), res.getString("name"),
-                    res.getDouble("ratings"), res.getInt("no_of_ratings"),
-                    res.getInt("discount_price"), res.getInt("actual_price"),
-                    res.getInt("category"));
-            base_list.add(prod);
-            cat_map.put(res.getString("sub_category"), res.getInt("category"));
-        }
-        String cat_prd = prd.getSub_category();
-        Optional<Integer> bestCat = base_list.stream()
-                .collect(Collectors.groupingBy(
-                        p -> cat_map.getOrDefault(p.getSub_category(), -1),
-                        Collectors.counting()
-                ))
-                .entrySet().stream()
-                .max((e1, e2) -> Long.compare(e1.getValue(), e2.getValue()))
-                .map(e -> e.getKey());
+    public static void importerProduit(String name_csv) throws SQLException, IOException {
+        String csvFile = "src/data/" + name_csv + ".csv";
+        char separator = ',';
+        StringBuilder query = new StringBuilder();
+        query.append("INSERT INTO produit(name, ratings, no_of_ratings, discount_price, actual_price, category) VALUES ");
+        ArrayList<String[]> produitList = new ArrayList<>();
 
-        String end_query = "SELECT * FROM produit WHERE category = " + bestCat + " ORDER BY RAND() LIMIT 1";
-        ResultSet res_2 = Connect.executeQuery(end_query);
-        while(res_2.next()) {
-            Produit new_prod = new Produit(
-                    res_2.getInt("Id_produit"),
-                    res_2.getString("name"),
-                    res_2.getDouble("ratings"),
-                    res_2.getInt("no_of_ratings"),
-                    res_2.getInt("discount_price"),
-                    res_2.getInt("actual_price"),
-                    res_2.getInt("category"));
-            addProduitToPanier(panier,new_prod,1);
-            System.out.println(new_prod.toString());
+        boolean isFirstLine = true;
+        for (String line : Files.readAllLines(Paths.get(csvFile))) {
+            if (isFirstLine) {
+                isFirstLine = false; // 跳过标题行
+                continue;
+            }
+            String[] data = line.split(String.valueOf(separator));
+            if (data.length != 7) { // 确保每行数据有 7 列
+                System.err.println("Invalid data: " + Arrays.toString(data));
+                continue;
+            }
+            produitList.add(data);
         }
+
+        produitList.forEach(produit -> {
+            try {
+                String libelle = produit[0];
+                String main_category = produit[1];
+                String sub_category = produit[2];
+                double rating = Double.parseDouble(produit[3]);
+                int no_of_ratings = Integer.parseInt(produit[4]);
+                int discount_price = Integer.parseInt(produit[5]);
+                int actual_price = Integer.parseInt(produit[6]);
+
+                int category;
+                if (catAndId_cat.containsKey(sub_category)) {
+                    category = catAndId_cat.get(sub_category);
+                } else {
+                    category = catAndId_cat.size() + 1;
+                    catAndId_cat.put(sub_category, category);
+
+                    String insertCategoryQuery = String.format(
+                            "INSERT INTO categories (Id_cat, main_category, sub_category) VALUES (%d, '%s', '%s')",
+                            category, main_category, sub_category);
+                    Connect.executeUpdate(insertCategoryQuery);
+                }
+
+                query.append(String.format("('%s', %.2f, %d, %d, %d, %d), ",
+                        libelle, rating, no_of_ratings, discount_price, actual_price, category));
+            } catch (Exception e) {
+                System.err.println("Error processing produit: " + Arrays.toString(produit));
+                e.printStackTrace();
+            }
+        });
+
+        if (query.charAt(query.length() - 2) == ',') {
+            query.delete(query.length() - 2, query.length()); // 移除最后的逗号
+        }
+        query.append(';');
+
+        System.out.println("Final SQL Query: " + query.toString()); // 打印最终 SQL 查询
+        Connect.executeUpdate(query.toString());
+        Connect.closeConnexion();
+    }
+
+    public static void main(String[] args) throws SQLException {
+        User user = UserDB.findUserById(1);
+        Produit produit = ProduitBD.loadProduit(1);
+        addProduitToPanier(user.getPanier(),produit,4);
+        user.getPanier();
     }
 
 }

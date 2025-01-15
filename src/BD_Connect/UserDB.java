@@ -25,7 +25,7 @@ public class UserDB {
 	}
 
 	public static User findUserById(int id) throws SQLException {
-		String query = "SELECT * FROM utilisateur WHERE id_user = " + id;
+		String query = "SELECT id_user, lastname, name, tel, adress, email, mot_de_passe, gender, date_de_naissance FROM utilisateur WHERE id_user = " + id;
 		ResultSet rs = Connect.executeQuery(query);
 		if(rs.next()) {
 			User user = new User(
