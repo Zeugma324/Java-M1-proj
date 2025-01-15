@@ -26,11 +26,12 @@ public class PanierBD {
             if(res.next()){
                 int id = res.getInt("id_panier");
                 String start_time = res.getString("Date_debut");
+                int id_magasin = res.getInt("id_magasin");
                 TreeMap<Produit, Integer> produits = new TreeMap<>();
                 while(res.next()){
                     produits.put(ProduitBD.loadProduit(res.getInt("id_produit")), 1);
                 }
-                Panier panier = new Panier(id, produits, user, start_time);
+                Panier panier = new Panier(id, produits, user, start_time,false);
                 return panier;
             }
         }
@@ -71,6 +72,8 @@ public class PanierBD {
             Connect.executeUpdate(query);
         }
     }
+
+
 
     public static void removeProduitFromPanier(Panier panier, Produit prd) throws SQLException {
         panier.getListProduit().remove(prd);
@@ -175,5 +178,83 @@ public class PanierBD {
         addProduitToPanier(user.getPanier(),produit,4);
         user.getPanier();
     }
+
+
+    public static Panier addPaniertoPanier(User user, Panier panier) throws SQLException {
+        Map<Produit, Integer> produits = panier.getListProduit();
+        produits.entrySet().stream()
+                .forEach(entry -> {
+                    user.getPanier().getListProduit().put(entry.getKey(), user.getPanier().getListProduit().getOrDefault(entry.getKey(), 0) + entry.getValue());
+                        });
+        updatePanierInDB(user.getPanier());
+        return panier;
+    }
+
+    public static void updatePanierInDB(Panier panier) throws SQLException {
+        String deleteSQL = String.format("DELETE FROM panier WHERE id_panier = %s AND Date_fin IS NULL", panier.getId());
+        Connect.executeUpdate(deleteSQL);
+
+        int id_panier = panier.getId();
+        String date_debut = panier.getStartTime().toString();
+        int id_user = panier.getUser().getIdUser();
+        StringBuilder query = new StringBuilder();
+        query.append("INSERT INTO panier(Id_panier, Id_produit, qte_produit, Date_debut,id_user) VALUES (");
+        panier.getListProduit().entrySet().stream()
+                .forEach(entry -> {
+                    query.append(id_panier + "," + entry.getKey().getId() + "," + entry.getValue() + ", '" + date_debut + "'," + id_user + "),");
+                });
+        query.deleteCharAt(query.length() - 1);
+        Connect.executeUpdate(query.toString());
+    }
+
+        //afficher une liste de Panier que le user choisir
+    public static ArrayList<Panier> historyPanierByUser(User user) throws SQLException {
+        String query = String.format(
+                "SELECT pa.id_panier, pa.id_user, pa.id_produit, pa.qte_produit, pa.start_time, pa.end_time, pa.isactive, " +
+                        " p.name, p.ratings, p.no_of_ratings, p.discount_price, p.actual_price, p.category " +
+                        "FROM panier pa " +
+                        "JOIN produit p ON pa.id_produit = p.id_produit " +
+                        "WHERE pa.id_user = %d " +
+                        "ORDER BY pa.id_panier",
+                user.getIdUser()
+        );
+        Map<Integer, Panier> panierMap = new HashMap<>();
+        try (ResultSet result = Connect.executeQuery(query)) {
+            while (result.next()) {
+                int idPanier = result.getInt("id_panier");
+                Panier panier = panierMap.get(idPanier);
+                if (panier == null) {
+                    String start_time = result.getString("start_time");
+                    String end_time = result.getString("end_time");
+                    boolean isActive = result.getBoolean("isactive");
+                    Map<Produit, Integer> produitsInThisPanier = new HashMap<>();
+
+                    panier = new Panier(idPanier, produitsInThisPanier, start_time, end_time, user);
+                    panier.setActive(isActive);
+
+                    panierMap.put(idPanier, panier);
+                }
+
+                Produit produit = new Produit(
+                        result.getInt("id_produit"),
+                        result.getString("name"),
+                        result.getDouble("ratings"),
+                        result.getInt("no_of_ratings"),
+                        result.getInt("discount_price"),
+                        result.getInt("actual_price"),
+                        result.getInt("category")
+                );
+
+                int qte = result.getInt("qte_produit");
+
+                panier.getListProduit().put(
+                        produit,
+                        panier.getListProduit().getOrDefault(produit, 0) + qte
+                );
+            }
+        }
+        return new ArrayList<>(panierMap.values());
+    }
+
 
 }

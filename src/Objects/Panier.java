@@ -11,10 +11,11 @@ public class Panier {
     private String start_time;
     private User user;
     private String end_time;
+
     private boolean isactive = true;
 
 
-    public Panier(int id, Map<Produit, Integer> produits, User user, String start_time) {
+    public Panier(int id, Map<Produit, Integer> produits, User user, String start_time, boolean isactive) {
         this.id = id;
         this.produits = produits;
         this.user = user;
