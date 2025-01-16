@@ -18,8 +18,9 @@ import java.util.stream.Collectors;
 
 import static BD_Connect.PanierBD.updatePanierInDB;
 import static BD_Connect.ProduitBD.catAndId_cat;
+import static Managers.MagasinManager.consulterUserParMagasin;
+import static Managers.MagasinManager.groupUserParGender;
 import static Managers.ProduitManager.*;
-import static Managers.ProduitManager.consulterUserParMagasin;
 import static Managers.UserManager.*;
 
 public class US {

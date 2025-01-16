@@ -50,8 +50,7 @@ public class PanierBD {
 //    }
 
     public static Panier loadPanierByUser(User user) throws SQLException {
-        // 这张表中, "UN user" 通常只能有 "UN seul panier" 未结束?
-        // 假设一个用户同时只能有一个 'Date_fin IS NULL' 的Panier
+
         String query = "SELECT pa.Id_panier, pa.Id_user, pa.Id_produit, pa.qte_produit, "
                 + "       pa.Date_debut, pa.Date_fin, pa.id_magasin, "
                 + "       p.id_produit, p.name, p.ratings, p.no_of_ratings, "
@@ -62,27 +61,21 @@ public class PanierBD {
                 + "  AND pa.Date_fin IS NULL;";
         ResultSet res = Connect.executeQuery(query);
 
-        // 用于存储查询到的产品 - 数量
         Map<Produit, Integer> produits = new HashMap<>();
-
-        // 先声明一些变量来记录 "panier" 级别的信息
         int panierId = -1;
         String start_time = null;
-        Integer id_magasin = null;  // 如果你需要的话
+        Integer id_magasin = null;
         boolean foundAnyRow = false;
 
-        // 遍历所有行
         while (res.next()) {
             foundAnyRow = true;
 
             if (panierId < 0) {
-                // 第一次读到行，就把 "panier" 级别的信息取出来
                 panierId    = res.getInt("Id_panier");
                 start_time  = res.getString("Date_debut");
-                id_magasin  = res.getInt("id_magasin"); // 看你是否需要在Panier对象保存
+                id_magasin  = res.getInt("id_magasin");
             }
 
-            // 每行都有一条 produit + qte_produit
             Produit produit = new Produit(
                     res.getInt("id_produit"),
                     res.getString("name"),
@@ -99,18 +92,15 @@ public class PanierBD {
         res.close();
 
         if (!foundAnyRow) {
-            // 数据库中没有 "Date_fin IS NULL" 的 panier => 新建一个
             int newId = calculateID();
             System.out.println("No existing Panier found. Creating new one: " + newId);
             return new Panier(newId, user);
         } else {
-            // 说明已有记录 => 用数据库中的 id_panier 构造 Panier
             Panier panier = new Panier(panierId, user);
             panier.setProduits(produits);
 
-            // start_time / id_magasin / ... 也可以 set
             panier.setStartTime(start_time);
-            panier.setActive(true);  // 未结束 => isActive = true
+            panier.setActive(true);
 
             System.out.println("Loaded existing Panier from DB, id=" + panierId);
             return panier;
@@ -206,12 +196,12 @@ public class PanierBD {
         boolean isFirstLine = true;
         for (String line : Files.readAllLines(Paths.get(csvFile))) {
             if (isFirstLine) {
-                isFirstLine = false; // 跳过标题行
+                isFirstLine = false;
                 continue;
             }
             String[] data = line.split(String.valueOf(separator));
-            if (data.length != 7) { // 确保每行数据有 7 列
-                System.err.println("Invalid data: " + Arrays.toString(data));
+            if (data.length != 7) {
+                System.err.println("data pas correct : " + Arrays.toString(data));
                 continue;
             }
             produitList.add(data);
@@ -243,17 +233,16 @@ public class PanierBD {
                 query.append(String.format("('%s', %.2f, %d, %d, %d, %d), ",
                         libelle, rating, no_of_ratings, discount_price, actual_price, category));
             } catch (Exception e) {
-                System.err.println("Error processing produit: " + Arrays.toString(produit));
+                System.err.println("Error parce que : " + Arrays.toString(produit));
                 e.printStackTrace();
             }
         });
 
-        if (query.charAt(query.length() - 2) == ',') {
-            query.delete(query.length() - 2, query.length()); // 移除最后的逗号
-        }
+        query.delete(query.length() - 2, query.length());
+
         query.append(';');
 
-        System.out.println("Final SQL Query: " + query.toString()); // 打印最终 SQL 查询
+        System.out.println("Final SQL Query: " + query.toString());
         Connect.executeUpdate(query.toString());
         Connect.closeConnexion();
     }

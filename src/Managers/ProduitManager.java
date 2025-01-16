@@ -15,10 +15,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+
 import static BD_Connect.PanierBD.addProduitToPanier;
-import static BD_Connect.ProduitBD.catAndId_cat;
-import static BD_Connect.ProduitBD.loadProduit;
+import static BD_Connect.ProduitBD.*;
 import static BD_Connect.UserDB.findUserById;
+import static Managers.MagasinManager.consulterUserParMagasin;
+import static Managers.MagasinManager.groupUserParGender;
 
 
 public class ProduitManager {
@@ -267,50 +269,6 @@ public class ProduitManager {
 //        }
 //        return usersAndQteAchat;
 //    }
-    public static HashMap<User, Integer> consulterUserParMagasin(int id_magasin) throws SQLException {
-        String query = """
-                    SELECT u.*,
-                    pa.*,
-                    p.id_produit, p.name AS produit_name, p.ratings, p.no_of_ratings, p.discount_price, p.actual_price, p.category
-                    FROM utilisateur u
-                    JOIN panier pa ON u.id_user = pa.id_user
-                    JOIN produit p ON pa.id_produit = p.id_produit
-                    WHERE pa.id_magasin = %d
-                    AND pa.date_fin IS NOT NULL;
-                """.formatted(id_magasin);
-
-        ResultSet rs = Connect.executeQuery(query);
-
-        HashMap<Integer, User> userMap = new HashMap<>();
-        HashMap<User, Integer> result = new HashMap<>();
-
-        while (rs.next()) {
-            int userId = rs.getInt("id_user");
-
-            User user = userMap.get(userId);
-            if (user == null) {
-                user = new User(
-                        userId,
-                        rs.getString("lastname"),
-                        rs.getString("name"),
-                        rs.getString("tel"),
-                        rs.getString("adress"),
-                        rs.getString("email"),
-                        rs.getString("mot_de_passe"),
-                        rs.getString("gender"),
-                        rs.getString("date_de_naissance")
-                );
-                userMap.put(userId, user);
-            }
-
-            int qte = rs.getInt("qte_produit");
-            result.put(user, result.getOrDefault(user, 0) + qte);
-        }
-
-        rs.close();
-        Connect.closeConnexion();
-        return result;
-    }
 
     public static HashMap<String, Integer> groupUserParAge(HashMap<User, Integer> usersAndQteAchat) throws SQLException {
         HashMap<String, Integer> userAgeAndQte = new HashMap<>();
@@ -343,22 +301,6 @@ public class ProduitManager {
         return percentageMap;
     }
 
-    public static HashMap<String, Integer> groupUserParGender(HashMap<User, Integer> usersAndQteAchat) throws SQLException {
-        HashMap<String, Integer> userGenderAndQte = new HashMap<>();
-        usersAndQteAchat.entrySet().stream()
-                .forEach(entry -> {
-                    String gender = entry.getKey().getGender();
-                    int qte = entry.getValue();
-                    userGenderAndQte.put(entry.getKey().getGender(), userGenderAndQte.getOrDefault(entry.getKey().getGender(), 0) + qte);
-                });
-        int amount_total = userGenderAndQte.values().stream().mapToInt(Integer::intValue).sum();
-        HashMap<String, Integer> percentageMap = new HashMap<>();
-        userGenderAndQte.forEach((key, value) -> {
-            int percentage = value * 100 / amount_total;
-            percentageMap.put(key, percentage);
-        });
-        return percentageMap;
-    }
 
 
     public static HashMap<User, Integer> consulterUserParProduit(Produit produit) throws SQLException {
@@ -460,10 +402,33 @@ public class ProduitManager {
         }
     }
 
+    public static void consulterMagasin(int id_magasin) throws SQLException {
+        HashMap<User,Integer> consulterUserParMagasin = consulterUserParMagasin(id_magasin);
+        HashMap<String,Integer> agePercentage = groupUserParAge(consulterUserParMagasin);
+        HashMap<String,Integer> genderPercentage = groupUserParGender(consulterUserParMagasin);
+        HashMap<String,Integer> zodiaquePercentage = groupUserParZodiaque(consulterUserParMagasin);
+        System.out.println("========================================");
+        System.out.println("Consulter magasin : " + id_magasin);
+        System.out.println(" Répartition selon les groupes d'âge :");
+        agePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.println("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
+
+        System.out.println("Répartition hommes/femmes :");
+        genderPercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.println(entry.getKey() + " : %" + entry.getValue()));
+
+        System.out.println("Répartition selon les signes du zodiaque :");
+        zodiaquePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.println(entry.getKey() + " : %" + entry.getValue()));
+    }
+
     public static void main(String[] args) throws SQLException, IOException {
-        User user = findUserById(1);
-        Panier panier = user.getPanier();
-        getReplacment(loadProduit(1),panier);
+//        User user = findUserById(1);
+//        Panier panier = user.getPanier();
+//        getReplacment(loadProduit(1),panier);
     }
 
 }

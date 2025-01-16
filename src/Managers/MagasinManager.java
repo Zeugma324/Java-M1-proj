@@ -1,5 +1,6 @@
 package Managers;
 
+import Objects.User;
 import connexion.Connect;
 
 import java.io.IOException;
@@ -7,7 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 
 import static BD_Connect.ProduitBD.catAndId_cat;
@@ -71,6 +75,22 @@ public class MagasinManager {
     public static void AVGTempRealiserPanier() throws SQLException {
         String sql = "SELECT AVG(TIMESTAMPDIFF(DAY, Date_debut, Date_fin)) AS TempMoyenP " +
                 "FROM panier WHERE Date_fin IS NOT NULL";
+
+        ResultSet result = Connect.executeQuery(sql);
+        if (result.next()) {
+            double AVGTempDays = result.getDouble("TempMoyenP");
+            System.out.println("Temps moyen de réalisation d'un panier : "
+                    + AVGTempDays + " jours");
+        } else {
+            System.out.println("Aucun panier finalisé trouvé.");
+        }
+        Connect.closeConnexion();
+    }
+
+    public static void AVGTempRealiserPanier(int idmagasin) throws SQLException {
+        String sql = "SELECT AVG(TIMESTAMPDIFF(DAY, Date_debut, Date_fin)) AS TempMoyenP " +
+                "FROM panier WHERE Date_fin IS NOT NULL " +
+                "AND Id_magasin = " + idmagasin;
 
         ResultSet result = Connect.executeQuery(sql);
         if (result.next()) {
@@ -198,8 +218,108 @@ public class MagasinManager {
         }
         Connect.closeConnexion();
     }
-    public static void main(String[] args) throws SQLException, IOException {
-        importerProduit("new_produits_list");
+
+    public static HashMap<String, Integer> groupUserParGender(HashMap<User, Integer> usersAndQteAchat) throws SQLException {
+        HashMap<String, Integer> userGenderAndQte = new HashMap<>();
+        usersAndQteAchat.entrySet().stream()
+                .forEach(entry -> {
+                    String gender = entry.getKey().getGender();
+                    int qte = entry.getValue();
+                    userGenderAndQte.put(entry.getKey().getGender(), userGenderAndQte.getOrDefault(entry.getKey().getGender(), 0) + qte);
+                });
+        int amount_total = userGenderAndQte.values().stream().mapToInt(Integer::intValue).sum();
+        HashMap<String, Integer> percentageMap = new HashMap<>();
+        userGenderAndQte.forEach((key, value) -> {
+            int percentage = value * 100 / amount_total;
+            percentageMap.put(key, percentage);
+        });
+        return percentageMap;
+    }
+
+    public static HashMap<User, Integer> consulterUserParMagasin(int id_magasin) throws SQLException {
+        String query = """
+                    SELECT u.*,
+                    pa.*,
+                    p.id_produit, p.name AS produit_name, p.ratings, p.no_of_ratings, p.discount_price, p.actual_price, p.category
+                    FROM utilisateur u
+                    JOIN panier pa ON u.id_user = pa.id_user
+                    JOIN produit p ON pa.id_produit = p.id_produit
+                    WHERE pa.id_magasin = %d
+                    AND pa.date_fin IS NOT NULL;
+                """.formatted(id_magasin);
+
+        ResultSet rs = Connect.executeQuery(query);
+
+        HashMap<Integer, User> userMap = new HashMap<>();
+        HashMap<User, Integer> result = new HashMap<>();
+
+        while (rs.next()) {
+            int userId = rs.getInt("id_user");
+
+            User user = userMap.get(userId);
+            if (user == null) {
+                user = new User(
+                        userId,
+                        rs.getString("lastname"),
+                        rs.getString("name"),
+                        rs.getString("tel"),
+                        rs.getString("adress"),
+                        rs.getString("email"),
+                        rs.getString("mot_de_passe"),
+                        rs.getString("gender"),
+                        rs.getString("date_de_naissance")
+                );
+                userMap.put(userId, user);
+            }
+
+            int qte = rs.getInt("qte_produit");
+            result.put(user, result.getOrDefault(user, 0) + qte);
+        }
+
+        rs.close();
+        Connect.closeConnexion();
+        return result;
+    }
+
+    public static ArrayList<Integer> commandAPreparer(int id_magasin) throws SQLException{
+        String query = String.format(
+                """
+                    SELECT pc.id_commande, p.Date_fin
+                    FROM panier p
+                    JOIN PanierCommande pc ON p.id_panier = pc.panier_id
+                    LEFT JOIN livrasion l on l.id_commande = pc.id_commande
+                    WHERE p.id_magasin = %d
+                    AND NOT EXISTS(
+                        SELECT 1
+                        FROM livrasion l2
+                        WHERE l2.id_commande = pc.id_commande
+                    )""",id_magasin);
+        ResultSet result = Connect.executeQuery(query);
+        HashMap<Integer, LocalDateTime> map = new HashMap<>();
+        while(result.next()){
+            int id_commande = result.getInt("id_commande");
+            String date_fin = result.getString("Date_fin");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime date = LocalDateTime.parse(date_fin,formatter);
+            map.put(id_commande, date);
+        }
+        ArrayList<Integer> list = new ArrayList<>();
+        map.entrySet().stream()
+                .sorted((o1,o2) -> o1.getValue().compareTo(o2.getValue()))
+                .forEach(entry -> list.add(entry.getKey()));
+        return list;
+    }
+
+    public static void finaliserCommand(int id_magasin, int id_commande, String moyen_livration) throws SQLException {
+        if(!moyen_livration.equals("retrait en magasin") && !moyen_livration.equals("livrasion")){}
+        String date_livrasion = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        String query = String.format(
+                """
+                        INSERT livrasion (moyen_livrasion, date_livrasion, id_commande,id_magasin)
+                        VALUES ('%s', '%s', %d, '%d'); """, moyen_livration, date_livrasion, id_commande, id_magasin);
+        Connect.executeUpdate(query);
+        Connect.closeConnexion();
     }
 
     }
