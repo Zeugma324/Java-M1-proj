@@ -13,8 +13,12 @@ import connexion.Connect;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
+import static BD_Connect.PanierBD.addProduitToPanier;
 import static BD_Connect.ProduitBD.catAndId_cat;
+import static BD_Connect.ProduitBD.loadProduit;
+import static BD_Connect.UserDB.findUserById;
 
 
 public class ProduitManager {
@@ -28,17 +32,24 @@ public class ProduitManager {
 
     // US 0.2 Je veux rechercher un produit par mot-clé.
     public static void rechercherProduit(String keyword) throws SQLException {
-        String query = "SELECT produit.id_produit " +
-                "FROM produit " +
-                "LEFT JOIN stock ON produit.id_produit = stock.id_produit " +
-                "WHERE produit.name LIKE '%" + keyword + "%';";
+        String query = "SELECT p.id_produit, p.name, p.ratings, p.no_of_ratings, "
+                + "p.discount_price, p.actual_price, p.category "
+                + "FROM produit p "
+                + "WHERE p.name LIKE '%" + keyword + "%'";
 
-        ResultSet result = Connect.executeQuery(query);
-
+        ResultSet rs = Connect.executeQuery(query);
         ArrayList<Produit> produits = new ArrayList<>();
-        System.out.println("Produits trouvés pour le mot-clé : " + keyword);
-        while (result.next()) {
-            produits.add(ProduitBD.loadProduit(result.getInt("id_produit")));
+        while (rs.next()) {
+            Produit produit = new Produit(
+                    rs.getInt("id_produit"),
+                    rs.getString("name"),
+                    rs.getDouble("ratings"),
+                    rs.getInt("no_of_ratings"),
+                    rs.getInt("discount_price"),
+                    rs.getInt("actual_price"),
+                    rs.getInt("category")
+            );
+            produits.add(produit);
         }
         produits.stream()
                 .sorted(selectComparator())
@@ -75,41 +86,38 @@ public class ProduitManager {
     }
 
     public static ArrayList<Produit> consulterProduitsParCategorieSansSort(int idCat) throws SQLException {
-        String query = "SELECT produit.id_produit " +
+        String query = "SELECT * " +
                 "FROM produit " +
                 "WHERE produit.category = " + idCat;
         ResultSet result = Connect.executeQuery(query);
-        ArrayList<Integer> ids = new ArrayList<>();
-        while(result.next()) {
-            ids.add(result.getInt("id_produit"));
-        }
         ArrayList<Produit> produits = new ArrayList<>();
-        ids.stream()
-                .map(id -> {
-                    try {
-                        return ProduitBD.loadProduit(id);
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .filter(produit -> produit != null)
-                .forEach(produit -> produits.add(produit));
+        while (result.next()) {
+            produits.add(new Produit(
+                    result.getInt("id_produit"),
+                    result.getString("name"),
+                    result.getDouble("ratings"),
+                    result.getInt("no_of_ratings"),
+                    result.getInt("discount_price"),
+                    result.getInt("actual_price"),
+                    result.getInt("category")
+            ));
+        }
         return produits;
     }
 
-    public static Comparator<Produit> selectComparator(){
+    public static Comparator<Produit> selectComparator() {
 
         System.out.println("Choisissez un champ de tri (1.libelle, 2.rating, 3.price) :");
 
         String trier = System.console().readLine();
-        if(!trier.equals("1") & !trier.equals("2") & !trier.equals("3")){
+        if (!trier.equals("1") & !trier.equals("2") & !trier.equals("3")) {
             System.out.println("Champ invalide");
             selectComparator();
         }
 
         System.out.println("Choisissez l'ordre de tri (1.ascending, 2.descending) :");
         String order = System.console().readLine();
-        if(!order.equals("1") & !order.equals("2") ){
+        if (!order.equals("1") & !order.equals("2")) {
             System.out.println("Champ invalide");
             selectComparator();
         }
@@ -191,7 +199,7 @@ public class ProduitManager {
                     Connect.executeUpdate(insertCategoryQuery);
                 }
 
-                query.append(String.format(Locale.US,"('%s', %.1f, %d, %d, %d, %d), ",
+                query.append(String.format(Locale.US, "('%s', %.1f, %d, %d, %d, %d), ",
                         libelle, rating, no_of_ratings, discount_price, actual_price, category));
             } catch (Exception e) {
                 e.printStackTrace();
@@ -210,75 +218,121 @@ public class ProduitManager {
 
     //Je veux consulter les différents profils de consommateurs.
     public static void consulterProduit(Produit produit) throws SQLException {
-        HashMap<User,Integer> consulterUserParProduit = consulterUserParProduit(produit);
-        HashMap<String,Integer> agePercentage = groupUserParAge(consulterUserParProduit);
-        HashMap<String,Integer> genderPercentage = groupUserParGender(consulterUserParProduit);
-        HashMap<String,Integer> zodiaquePercentage = groupUserParZodiaque(consulterUserParProduit);
+        HashMap<User, Integer> consulterUserParProduit = consulterUserParProduit(produit);
+        HashMap<String, Integer> agePercentage = groupUserParAge(consulterUserParProduit);
+        HashMap<String, Integer> genderPercentage = groupUserParGender(consulterUserParProduit);
+        HashMap<String, Integer> zodiaquePercentage = groupUserParZodiaque(consulterUserParProduit);
         System.out.println("========================================");
         System.out.println("Consulter produit : " + produit.getLibelle());
         System.out.println(" Répartition selon les groupes d'âge :");
         agePercentage.entrySet().stream()
-                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
-                .forEach(entry -> System.out.printf("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
+                .sorted((o1, o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.printf("Âge " + entry.getKey() + " : %" + entry.getValue()));
 
         System.out.println("Répartition hommes/femmes :");
         genderPercentage.entrySet().stream()
-                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .sorted((o1, o2) -> o2.getValue() - o1.getValue())
                 .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
 
         System.out.println("Répartition selon les signes du zodiaque :");
         zodiaquePercentage.entrySet().stream()
-                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .sorted((o1, o2) -> o2.getValue() - o1.getValue())
                 .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
     }
 
 
-    public static HashMap<User,Integer> consulterUserParProduit(Produit produit) throws SQLException {
-        String query =  "SELECT u.id_user, u.lastname, u.name, u.tel, u.adress, u.email, u.mot_de_passe, u.gender, u.date_de_naissance, p.qte_produit " +
-                "FROM utilisateur u JOIN panier p on u.id_produit = p.id_produit "+
-                "WHERE p.id_produit = " + produit.getId() + " "
-                +"AND Date_fin NOT NULL ; ";
+//    public static HashMap<User, Integer> consulterUserParProduit(Produit produit) throws SQLException {
+//        String query = "SELECT u.id_user, u.lastname, u.name, u.tel, u.adress, u.email, u.mot_de_passe, u.gender, u.date_de_naissance, p.qte_produit " +
+//                "FROM utilisateur u JOIN panier p on u.id_user = p.id_user " +
+//                "WHERE p.id_produit = " + produit.getId() + " "
+//                + "AND Date_fin IS NOT NULL ; ";
+
+    /// /        System.out.println(query);
+//        ResultSet rs = Connect.executeQuery(query);
+//        HashMap<User, Integer> usersAndQteAchat = new HashMap<>();
+//        while (rs.next()) {
+//            User user = new User(
+//                    rs.getInt("id_user"),
+//                    rs.getString("lastname"),
+//                    rs.getString("name"),
+//                    rs.getString("tel"),
+//                    rs.getString("adress"),
+//                    rs.getString("email"),
+//                    rs.getString("mot_de_passe"),
+//                    rs.getString("gender"),
+//                    rs.getString("date_de_naissance"));
+//            user.setPanier(PanierBD.loadPanierByUser(user));
+//            int qteAchat = rs.getInt("qte_produit");
+//            usersAndQteAchat.put(user, usersAndQteAchat.getOrDefault(user, 0) + qteAchat);
+//        }
+//        return usersAndQteAchat;
+//    }
+    public static HashMap<User, Integer> consulterUserParMagasin(int id_magasin) throws SQLException {
+        String query = """
+                    SELECT u.*,
+                    pa.*,
+                    p.id_produit, p.name AS produit_name, p.ratings, p.no_of_ratings, p.discount_price, p.actual_price, p.category
+                    FROM utilisateur u
+                    JOIN panier pa ON u.id_user = pa.id_user
+                    JOIN produit p ON pa.id_produit = p.id_produit
+                    WHERE pa.id_magasin = %d
+                    AND pa.date_fin IS NOT NULL;
+                """.formatted(id_magasin);
+
         ResultSet rs = Connect.executeQuery(query);
-        HashMap<User,Integer> usersAndQteAchat = new HashMap<>();
+
+        HashMap<Integer, User> userMap = new HashMap<>();
+        HashMap<User, Integer> result = new HashMap<>();
+
         while (rs.next()) {
-            User user = new User(
-                    rs.getInt("id_user"),
-                    rs.getString("lastname"),
-                    rs.getString("name"),
-                    rs.getString("tel"),
-                    rs.getString("adress"),
-                    rs.getString("email"),
-                    rs.getString("mot_de_passe"),
-                    rs.getString("gender"),
-                    rs.getString("date_de_naissance"));
-            user.setPanier(PanierBD.loadPanierByUser(user)) ;
-            int qteAchat = rs.getInt("qte_produit");
-            usersAndQteAchat.put(user, usersAndQteAchat.getOrDefault(user, 0) + qteAchat);
+            int userId = rs.getInt("id_user");
+
+            User user = userMap.get(userId);
+            if (user == null) {
+                user = new User(
+                        userId,
+                        rs.getString("lastname"),
+                        rs.getString("name"),
+                        rs.getString("tel"),
+                        rs.getString("adress"),
+                        rs.getString("email"),
+                        rs.getString("mot_de_passe"),
+                        rs.getString("gender"),
+                        rs.getString("date_de_naissance")
+                );
+                userMap.put(userId, user);
+            }
+
+            int qte = rs.getInt("qte_produit");
+            result.put(user, result.getOrDefault(user, 0) + qte);
         }
-        return usersAndQteAchat;
+
+        rs.close();
+        Connect.closeConnexion();
+        return result;
     }
 
-    public static HashMap<String, Integer> groupUserParAge(HashMap<User,Integer> usersAndQteAchat) throws SQLException {
+    public static HashMap<String, Integer> groupUserParAge(HashMap<User, Integer> usersAndQteAchat) throws SQLException {
         HashMap<String, Integer> userAgeAndQte = new HashMap<>();
         usersAndQteAchat.entrySet().stream()
-                .forEach(entry ->{
+                .forEach(entry -> {
                     int age = entry.getKey().getAge();
                     int qte = entry.getValue();
                     String ageGroup = "";
-                    if (age <= 18 && age > 0){
+                    if (age <= 18 && age > 0) {
                         ageGroup = "<18";
-                    }else if(age <=25){
+                    } else if (age <= 25) {
                         ageGroup = "18-25";
-                    }else if(age <= 35){
+                    } else if (age <= 35) {
                         ageGroup = "25-35";
-                    }else if(age <= 50){
+                    } else if (age <= 50) {
                         ageGroup = "35-50";
-                    }else if(age <= 75){
+                    } else if (age <= 75) {
                         ageGroup = "50-75";
-                    }else{
+                    } else {
                         ageGroup = ">75";
                     }
-                    userAgeAndQte.put(ageGroup,userAgeAndQte.getOrDefault(ageGroup,0)+qte);
+                    userAgeAndQte.put(ageGroup, userAgeAndQte.getOrDefault(ageGroup, 0) + qte);
                 });
         int amount_total = userAgeAndQte.values().stream().mapToInt(Integer::intValue).sum();
         HashMap<String, Integer> percentageMap = new HashMap<>();
@@ -289,10 +343,10 @@ public class ProduitManager {
         return percentageMap;
     }
 
-    public static HashMap<String, Integer> groupUserParGender(HashMap<User,Integer> usersAndQteAchat) throws SQLException {
+    public static HashMap<String, Integer> groupUserParGender(HashMap<User, Integer> usersAndQteAchat) throws SQLException {
         HashMap<String, Integer> userGenderAndQte = new HashMap<>();
         usersAndQteAchat.entrySet().stream()
-                .forEach(entry ->{
+                .forEach(entry -> {
                     String gender = entry.getKey().getGender();
                     int qte = entry.getValue();
                     userGenderAndQte.put(entry.getKey().getGender(), userGenderAndQte.getOrDefault(entry.getKey().getGender(), 0) + qte);
@@ -306,10 +360,54 @@ public class ProduitManager {
         return percentageMap;
     }
 
-    public static HashMap<String,Integer> groupUserParZodiaque(HashMap<User,Integer> usersAndQteAchat) throws SQLException {
+
+    public static HashMap<User, Integer> consulterUserParProduit(Produit produit) throws SQLException {
+        String query = """
+                    SELECT u.id_user, u.lastname, u.name, u.tel, u.adress, u.email, u.mot_de_passe, u.gender, u.date_de_naissance,
+                    pa.id_panier, pa.qte_produit, pa.id_magasin, pa.Date_debut, pa.Date_fin,
+                    p.id_produit, p.name AS produit_name, p.ratings, p.no_of_ratings, p.discount_price, p.actual_price, p.category
+                    FROM utilisateur u
+                    JOIN panier pa ON u.id_user = pa.id_user
+                    JOIN produit p ON pa.id_produit = p.id_produit
+                    WHERE p.id_produit = %d
+                    AND pa.date_fin IS NOT NULL;
+                """.formatted(produit.getId());
+
+        ResultSet rs = Connect.executeQuery(query);
+        HashMap<Integer, User> userMap = new HashMap<>();
+        HashMap<User, Integer> result = new HashMap<>();
+
+        while (rs.next()) {
+            int userId = rs.getInt("id_user");
+            User user = userMap.get(userId);
+            if (user == null) {
+                user = new User(
+                        userId,
+                        rs.getString("lastname"),
+                        rs.getString("name"),
+                        rs.getString("tel"),
+                        rs.getString("adress"),
+                        rs.getString("email"),
+                        rs.getString("mot_de_passe"),
+                        rs.getString("gender"),
+                        rs.getString("date_de_naissance")
+                );
+                userMap.put(userId, user);
+            }
+            int qte = rs.getInt("qte_produit");
+
+            result.put(user, result.getOrDefault(user, 0) + qte);
+        }
+        rs.close();
+        Connect.closeConnexion();
+        return result;
+    }
+
+
+    public static HashMap<String, Integer> groupUserParZodiaque(HashMap<User, Integer> usersAndQteAchat) throws SQLException {
         HashMap<String, Integer> userZodiaqueAndQte = new HashMap<>();
         usersAndQteAchat.entrySet().stream()
-                .forEach(entry ->{
+                .forEach(entry -> {
                     String zodiaque = entry.getKey().getZodiaque();
                     int qte = entry.getValue();
                     userZodiaqueAndQte.put(entry.getKey().getZodiaque(), userZodiaqueAndQte.getOrDefault(entry.getKey().getZodiaque(), 0) + qte);
@@ -322,7 +420,50 @@ public class ProduitManager {
         });
         return percentageMap;
     }
-    public static void main(String[] args) throws SQLException, IOException {
-        importerProduit("new_produits_list");
+
+    public static void getReplacment(Produit prd, Panier panier) throws SQLException {
+        PanierBD.removeProduitFromPanier(panier, prd);
+        List<Produit> base_list = new ArrayList<>();
+        String str = "SELECT p.*, pa.qte_produit FROM panier pa JOIN produit p ON pa.Id_produit = p.Id_produit WHERE pa.Id_user = " + panier.getUser().getIdUser() + " AND pa.Date_fin IS NOT NULL";
+        ResultSet res = Connect.executeQuery(str);
+        while (res.next()) {
+            Produit prod = new Produit(
+                    res.getInt("Id_produit"),
+                    res.getString("name"),
+                    res.getDouble("ratings"),
+                    res.getInt("no_of_ratings"),
+                    res.getInt("discount_price"),
+                    res.getInt("actual_price"),
+                    res.getInt("category"));
+            base_list.add(prod);
+        }
+        int cat_prd = catAndId_cat.get(prd.getSub_category());
+        Optional<Integer> bestCat = base_list.stream()
+                .collect(Collectors.groupingBy(p -> catAndId_cat.get(p.getSub_category()), Collectors.counting()))
+                .entrySet().stream()
+                .max((e1, e2) -> Long.compare(e1.getValue(), e2.getValue()))
+                .map(e -> e.getKey());
+
+        String end_query = "SELECT * FROM produit WHERE category = " + bestCat + " ORDER BY RAND() LIMIT 1";
+        ResultSet res_2 = Connect.executeQuery(end_query);
+        while (res_2.next()) {
+            Produit new_prod = new Produit(
+                    res_2.getInt("Id_produit"),
+                    res_2.getString("name"),
+                    res_2.getDouble("ratings"),
+                    res_2.getInt("no_of_ratings"),
+                    res_2.getInt("discount_price"),
+                    res_2.getInt("actual_price"),
+                    res_2.getInt("category"));
+            addProduitToPanier(panier,new_prod,1,1);
+            System.out.println(new_prod.toString());
+        }
     }
+
+    public static void main(String[] args) throws SQLException, IOException {
+        User user = findUserById(1);
+        Panier panier = user.getPanier();
+        getReplacment(loadProduit(1),panier);
+    }
+
 }

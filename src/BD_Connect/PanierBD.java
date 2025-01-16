@@ -17,27 +17,106 @@ import static BD_Connect.ProduitBD.catAndId_cat;
 
 public class PanierBD {
 
+//    public static Panier loadPanierByUser(User user) throws SQLException {
+//        String query = "SELECT pa.*, p.* " +
+//                "FROM panier pa JOIN produit p ON pa.id_produit = p.id_produit " +
+//                "WHERE id_user = " + user.getIdUser() + " " +
+//                "AND Date_fin IS NULL ;";
+//        ResultSet res = Connect.executeQuery(query);
+//        if (res.next()) {
+//            int id = res.getInt("id_panier");
+//            String start_time = res.getString("Date_debut");
+//            int id_magasin = res.getInt("id_magasin");
+//        }
+//        Map<Produit, Integer> produits = new TreeMap<>();
+//        Map<Produit, Integer> produitMagasins = new TreeMap<>();
+//        while (res.next()) {
+//            int id = res.getInt("id_produit");
+//            String libelle = res.getString("name");
+//            double ratings = res.getDouble("ratings");
+//            int no_of_ratings = res.getInt("no_of_ratings");
+//            int discount_price = res.getInt("discount_price");
+//            int actual_price = res.getInt("actual_price");
+//            int categorie = res.getInt("category");
+//            int qte = res.getInt("qte_produit");
+//            int id_magasin = res.getInt("id_magasin");
+//            Produit produit = new Produit(id,libelle,ratings,no_of_ratings,discount_price,actual_price,categorie);
+//            produits.put(produit,produits.getOrDefault(produit,0) + qte);
+//        }
+//        Panier panier = new Panier(calculateID(),user);
+//        panier.setProduits(produits);
+//        panier.setProduitAndMagasin(produitMagasins);
+//        return panier;
+//    }
+
     public static Panier loadPanierByUser(User user) throws SQLException {
-        String query = "SELECT * FROM panier "
-                + "WHERE id_user = " + user.getIdUser() + " "
-                + "AND Date_fin IS NULL ;";
-        if(Connect.recordExists(query)){
-            ResultSet res = Connect.executeQuery(query);
-            if(res.next()){
-                int id = res.getInt("id_panier");
-                String start_time = res.getString("Date_debut");
-                int id_magasin = res.getInt("id_magasin");
-                TreeMap<Produit, Integer> produits = new TreeMap<>();
-                while(res.next()){
-                    produits.put(ProduitBD.loadProduit(res.getInt("id_produit")), 1);
-                }
-                Panier panier = new Panier(id, produits, user, start_time,false);
-                return panier;
+        // 这张表中, "UN user" 通常只能有 "UN seul panier" 未结束?
+        // 假设一个用户同时只能有一个 'Date_fin IS NULL' 的Panier
+        String query = "SELECT pa.Id_panier, pa.Id_user, pa.Id_produit, pa.qte_produit, "
+                + "       pa.Date_debut, pa.Date_fin, pa.id_magasin, "
+                + "       p.id_produit, p.name, p.ratings, p.no_of_ratings, "
+                + "       p.discount_price, p.actual_price, p.category "
+                + "FROM panier pa "
+                + "JOIN produit p ON pa.id_produit = p.id_produit "
+                + "WHERE pa.Id_user = " + user.getIdUser() + " "
+                + "  AND pa.Date_fin IS NULL;";
+        ResultSet res = Connect.executeQuery(query);
+
+        // 用于存储查询到的产品 - 数量
+        Map<Produit, Integer> produits = new HashMap<>();
+
+        // 先声明一些变量来记录 "panier" 级别的信息
+        int panierId = -1;
+        String start_time = null;
+        Integer id_magasin = null;  // 如果你需要的话
+        boolean foundAnyRow = false;
+
+        // 遍历所有行
+        while (res.next()) {
+            foundAnyRow = true;
+
+            if (panierId < 0) {
+                // 第一次读到行，就把 "panier" 级别的信息取出来
+                panierId    = res.getInt("Id_panier");
+                start_time  = res.getString("Date_debut");
+                id_magasin  = res.getInt("id_magasin"); // 看你是否需要在Panier对象保存
             }
+
+            // 每行都有一条 produit + qte_produit
+            Produit produit = new Produit(
+                    res.getInt("id_produit"),
+                    res.getString("name"),
+                    res.getDouble("ratings"),
+                    res.getInt("no_of_ratings"),
+                    res.getInt("discount_price"),
+                    res.getInt("actual_price"),
+                    res.getInt("category")
+            );
+
+            int qte = res.getInt("qte_produit");
+            produits.put(produit, produits.getOrDefault(produit, 0) + qte);
         }
-        Connect.closeConnexion();
-        return new Panier(calculateID(),user);
+        res.close();
+
+        if (!foundAnyRow) {
+            // 数据库中没有 "Date_fin IS NULL" 的 panier => 新建一个
+            int newId = calculateID();
+            System.out.println("No existing Panier found. Creating new one: " + newId);
+            return new Panier(newId, user);
+        } else {
+            // 说明已有记录 => 用数据库中的 id_panier 构造 Panier
+            Panier panier = new Panier(panierId, user);
+            panier.setProduits(produits);
+
+            // start_time / id_magasin / ... 也可以 set
+            panier.setStartTime(start_time);
+            panier.setActive(true);  // 未结束 => isActive = true
+
+            System.out.println("Loaded existing Panier from DB, id=" + panierId);
+            return panier;
+        }
     }
+
 
 
 
@@ -47,11 +126,10 @@ public class PanierBD {
         if(res.next()) {
             return res.getInt("MAX(Id_panier)") + 1;
         }
-        Connect.closeConnexion();
         return 1;
     }
 
-    public static void addProduitToPanier(Panier panier, Produit prod, int quantity) throws SQLException {
+    public static void addProduitToPanier(Panier panier, Produit prod, int quantity, int id_magasin) throws SQLException {
         if (panier.getListProduit().isEmpty()) {
             panier.setStartTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         }
@@ -61,28 +139,26 @@ public class PanierBD {
             int updatedQuantity = currentQuantity + quantity;
             panier.getListProduit().put(prod, updatedQuantity);
 
-            String query = "UPDATE Panier SET qte_produit = " + updatedQuantity +
+            String query = "UPDATE panier SET qte_produit = " + updatedQuantity + ", id_magasin = " + id_magasin +
                     " WHERE Id_panier = " + panier.getId() +
                     " AND Id_produit = " + prod.getId() +
                     " AND Id_user = " + panier.getUser().getIdUser();
             Connect.executeUpdate(query);
         } else {
             panier.getListProduit().put(prod, quantity);
-
-            String query = "INSERT INTO Panier (Id_panier, Id_produit, qte_produit, Date_debut, Date_fin, Id_user) " +
-                    "VALUES (" + panier.getId() + ", " + prod.getId() + ", " + quantity + ", '" + panier.getStartTime() + "', NULL, " + panier.getUser().getIdUser() + ")";
+            String query = "INSERT INTO panier (Id_panier, Id_produit, qte_produit, Date_debut, Date_fin, Id_user, id_magasin) " +
+                    "VALUES (" + panier.getId() + ", " + prod.getId() + ", " + quantity + ", '" + panier.getStartTime() + "', NULL, " + panier.getUser().getIdUser() +"," + id_magasin+ ")";
             Connect.executeUpdate(query);
         }
-        Connect.closeConnexion();
     }
 
 
 
     public static void removeProduitFromPanier(Panier panier, Produit prd) throws SQLException {
         panier.getListProduit().remove(prd);
+        panier.getListProduitAndMagasin().remove(prd);
         String query = "DELETE FROM Panier WHERE Id_produit = " + prd.getId() + " AND Id_panier = " + panier.getId() + " AND Id_user = " + panier.getUser().getIdUser() + " AND Date_debut = '" + panier.getStartTime() + "' )";
         Connect.executeUpdate(query);
-        Connect.closeConnexion();
     }
 
     public void modifiereProduitPanier(Panier panier, Produit prd, int quantity) throws SQLException {
@@ -93,27 +169,31 @@ public class PanierBD {
                 " AND Id_user = " + panier.getUser().getIdUser();
     }
 
-    public void annulerPanier(Panier panier) throws SQLException {
-        String query = "DELETE FROM Panier WHERE Id_user = " + panier.getUser().getIdUser() +
-                " AND Date_debut = '" + panier.getStartTime() + "' )";
+    public static void annulerPanier(Panier panier) throws SQLException {
+        String query = "DELETE FROM panier WHERE id_panier = " + panier.getId();
         Connect.executeUpdate(query);
         panier.getListProduit().clear();
-        Connect.closeConnexion();
+        panier.getListProduitAndMagasin().clear();
     }
 
-    //waiting to be connected with commandJava
+    public static void annulerPanier(User user) throws SQLException {
+        String query = "DELETE FROM panier WHERE id_panier = " + user.getPanier().getId();
+        Connect.executeUpdate(query);
+        user.getPanier().getListProduit().clear();
+        user.getPanier().getListProduitAndMagasin().clear();
+    }
+
     public static void validerPanier(Panier panier) throws SQLException {
-        panier.setEndTime(new String(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+        panier.setEndTime("'" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "'");
         panier.setActive(false);
 
         String str_panier = "UPDATE panier SET Date_fin = " + panier.getEndTime() + " WHERE Id_panier = " + panier.getId();
         Connect.executeUpdate(str_panier);
         String str_command_table = "INSERT INTO commande (Date_commande) VALUES (" + panier.getEndTime() + " )";
-        String str_association_table = "INSERT INTO PanierCommande (panier_id, Id_commande) VALUES (" + panier.getId() +
-                " , SELECT Id_commande FROM commande WHERE Date_commande = " + panier.getEndTime() + " )";
-        Connect.executeUpdate(str_command_table);
+        int id_commande = Connect.creationWithAutoIncrement(str_command_table);
+        String str_association_table = "INSERT INTO PanierCommande VALUES (" + panier.getId() +
+                " , "+ id_commande +" );";
         Connect.executeUpdate(str_association_table);
-        Connect.closeConnexion();
     }
 
     public static void importerProduit(String name_csv) throws SQLException, IOException {
@@ -178,22 +258,15 @@ public class PanierBD {
         Connect.closeConnexion();
     }
 
-    /*public static void main(String[] args) throws SQLException {
-        User user = UserDB.findUserById(1);
-        Produit produit = ProduitBD.loadProduit(1);
-        addProduitToPanier(user.getPanier(),produit,4);
-        user.getPanier();
-    }*/
-
-
     public static Panier addPaniertoPanier(User user, Panier panier) throws SQLException {
+        user.setPanier(loadPanierByUser(user));
         Map<Produit, Integer> produits = panier.getListProduit();
         produits.entrySet().stream()
                 .forEach(entry -> {
                     user.getPanier().getListProduit().put(entry.getKey(), user.getPanier().getListProduit().getOrDefault(entry.getKey(), 0) + entry.getValue());
-                        });
+                });
         updatePanierInDB(user.getPanier());
-        return panier;
+        return user.getPanier();
     }
 
     public static void updatePanierInDB(Panier panier) throws SQLException {
@@ -211,13 +284,12 @@ public class PanierBD {
                 });
         query.deleteCharAt(query.length() - 1);
         Connect.executeUpdate(query.toString());
-        Connect.closeConnexion();
     }
 
-        //afficher une liste de Panier que le user choisir
+    //afficher une liste de Panier que le user choisir
     public static ArrayList<Panier> historyPanierByUser(User user) throws SQLException {
         String query = String.format(
-                "SELECT pa.id_panier, pa.id_user, pa.id_produit, pa.qte_produit, pa.start_time, pa.end_time, pa.isactive, " +
+                "SELECT pa.id_panier, pa.id_user, pa.id_produit, pa.qte_produit, pa.Date_debut, pa.Date_fin, " +
                         " p.name, p.ratings, p.no_of_ratings, p.discount_price, p.actual_price, p.category " +
                         "FROM panier pa " +
                         "JOIN produit p ON pa.id_produit = p.id_produit " +
@@ -231,13 +303,12 @@ public class PanierBD {
                 int idPanier = result.getInt("id_panier");
                 Panier panier = panierMap.get(idPanier);
                 if (panier == null) {
-                    String start_time = result.getString("start_time");
-                    String end_time = result.getString("end_time");
-                    boolean isActive = result.getBoolean("isactive");
+                    String start_time = result.getString("Date_debut");
+                    String end_time = result.getString("Date_fin");
                     Map<Produit, Integer> produitsInThisPanier = new HashMap<>();
 
                     panier = new Panier(idPanier, produitsInThisPanier, start_time, end_time, user);
-                    panier.setActive(isActive);
+                    panier.setActive(true);
 
                     panierMap.put(idPanier, panier);
                 }
@@ -260,9 +331,21 @@ public class PanierBD {
                 );
             }
         }
-        Connect.closeConnexion();
         return new ArrayList<>(panierMap.values());
     }
 
 
+    public static void main(String[] args) throws SQLException {
+        User user = UserDB.findUserById(1);
+        Produit produit = ProduitBD.loadProduit(1);
+        addProduitToPanier(user.getPanier(),produit,4,2);
+
+        validerPanier(user.getPanier());
+        System.out.println(historyPanierByUser(user));
+        Panier panier = historyPanierByUser(user).getFirst();
+        addPaniertoPanier(user,panier);
+        System.out.println(user.getPanier());
+        annulerPanier(user.getPanier());
+        System.out.println("Panier apres annuler" + user.getPanier());
+    }
 }

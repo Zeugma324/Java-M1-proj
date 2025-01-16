@@ -1,5 +1,7 @@
 package Requets.Produits;
 
+import BD_Connect.PanierBD;
+
 import java.sql.SQLException;
 import java.util.Scanner;
 
@@ -102,7 +104,7 @@ public class main {
                     System.out.println("\n=== Trier les produits d'une catégorie ===");
                     System.out.print("Entrez l'ID de la catégorie : ");
                     int categorieTriId = Integer.parseInt(scanner.nextLine());
-                    trierProduits(categorieTriId);
+                    consulterProduitsParCategorie(categorieTriId);
                     break;
                 case 5:
                     System.out.println("\n=== Ajouter un produit au panier ===");
@@ -186,7 +188,7 @@ public class main {
                     break;
                 case 25:
                     System.out.println("Merci et au revoir !");
-                    running = false;
+//                    running = false;
                     break;
                 default:
                     System.out.println("Option invalide. Veuillez choisir entre 1 et 25.");

@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Locale;
 
 import static BD_Connect.ProduitBD.catAndId_cat;
 
@@ -20,12 +21,11 @@ public class MagasinManager {
         StringBuilder query = new StringBuilder();
         query.append("INSERT INTO produit(name, ratings, no_of_ratings, discount_price, actual_price, category) VALUES ");
         ArrayList<String[]> produitList = new ArrayList<>();
-
         for (String line : Files.readAllLines(Paths.get(csvFile))) {
             String[] data = line.split(String.valueOf(separator));
             produitList.add(data);
         }
-
+        produitList.remove(0);
         produitList.forEach(produit -> {
             try {
                 String libelle = produit[0];
@@ -52,10 +52,9 @@ public class MagasinManager {
                 }
 
                 // ecrit un quand query donc on peux faire tout les insert dan 1 grand query.
-                query.append(String.format("('%s', %.2f, %d, %d, %d, %d), ",
+                query.append( String.format(Locale.US,"('%s', %.2f, %d, %d, %d, %d), ",
                         libelle, rating, no_of_ratings, discount_price, actual_price, category));
             } catch (Exception e) {
-                System.err.println("错误解析行: " + String.join(",", produit));
                 e.printStackTrace();
             }
         });
@@ -200,7 +199,7 @@ public class MagasinManager {
         Connect.closeConnexion();
     }
     public static void main(String[] args) throws SQLException, IOException {
-        AVGTempPrepareCom(1);
+        importerProduit("new_produits_list");
     }
 
     }

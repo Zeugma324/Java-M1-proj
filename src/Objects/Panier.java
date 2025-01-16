@@ -8,6 +8,7 @@ import java.util.TreeMap;
 public class Panier {
     private int id;
     private Map<Produit, Integer> produits = new TreeMap<>();
+    private Map<Produit, Integer> produitAndMagasin = new TreeMap<>();
     private String start_time;
     private User user;
     private String end_time;
@@ -62,6 +63,8 @@ public class Panier {
         return this.isactive;
     }
 
+    public Map<Produit, Integer> getListProduitAndMagasin() {  return this.produitAndMagasin; }
+
     public void setId(int id) {
         this.id = id;
     }
@@ -85,6 +88,8 @@ public class Panier {
     public void setActive(boolean isactive) {
         this.isactive = isactive;
     }
+
+    public void setProduitAndMagasin(Map<Produit, Integer> produitAndMagasin) { this.produitAndMagasin = produitAndMagasin; }
 
     public void afficher(){
         System.out.println("User: "+ this.getUser().getLastname() + " " + this.getUser().getLastname());

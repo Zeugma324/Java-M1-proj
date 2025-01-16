@@ -2,6 +2,7 @@ package Console;
 
 import BD_Connect.ProduitBD;
 
+import BD_Connect.UserDB;
 import Objects.*;
 
 import connexion.Connect;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 import static BD_Connect.PanierBD.updatePanierInDB;
 import static BD_Connect.ProduitBD.catAndId_cat;
 import static Managers.ProduitManager.*;
+import static Managers.ProduitManager.consulterUserParMagasin;
 import static Managers.UserManager.*;
 
 public class US {
@@ -75,9 +77,7 @@ public class US {
         Connect.closeConnexion();
     }
 
-    // =========================
-    // US 0.3 - Consulter les produits par catégorie
-    // =========================
+    // US 0.3 : Consulter les produits par catégorie
     public static ArrayList<Produit> consulterProduitsParCategorie(int idCat) throws SQLException {
         String query = "SELECT * FROM produit WHERE category = " + idCat;
         ResultSet result = Connect.executeQuery(query);
@@ -97,58 +97,62 @@ public class US {
 
         if (liste.isEmpty()) {
             System.out.println("Aucun produit trouvé dans la catégorie " + idCat);
-            return null;
+            return liste;
         }
-
-        // Tri (US 0.4)
         liste.stream()
                 .sorted(selectComparator())
-                .limit(10)
-                .forEach(System.out::println);
-        Connect.closeConnexion();
+                .limit(10);
         return liste;
     }
 
-    // =========================
-    // US 0.4 - Choix du comparateur (tri)
-    // =========================
+    public static ArrayList<Produit> consulterProduitsParCategorieSansSort(int idCat) throws SQLException {
+        String query = "SELECT * " +
+                "FROM produit " +
+                "WHERE produit.category = " + idCat;
+        ResultSet result = Connect.executeQuery(query);
+        ArrayList<Produit> produits = new ArrayList<>();
+        while (result.next()) {
+            produits.add(new Produit(
+                    result.getInt("id_produit"),
+                    result.getString("name"),
+                    result.getDouble("ratings"),
+                    result.getInt("no_of_ratings"),
+                    result.getInt("discount_price"),
+                    result.getInt("actual_price"),
+                    result.getInt("category")
+            ));
+        }
+        return produits;
+    }
+
     public static Comparator<Produit> selectComparator() {
+
         System.out.println("Choisissez un champ de tri (1.libelle, 2.rating, 3.price) :");
-        String trier;
 
-        if (System.console() != null) {
-            trier = System.console().readLine();
-        } else {
-            trier = "2";
+        String trier = System.console().readLine();
+        if (!trier.equals("1") & !trier.equals("2") & !trier.equals("3")) {
+            System.out.println("Champ invalide");
+            selectComparator();
         }
 
-        System.out.println("Ordre de tri (1.asc, 2.desc) :");
-        String order;
-        if (System.console() != null) {
-            order = System.console().readLine();
-        } else {
-            order = "2";
+        System.out.println("Choisissez l'ordre de tri (1.ascending, 2.descending) :");
+        String order = System.console().readLine();
+        if (!order.equals("1") & !order.equals("2")) {
+            System.out.println("Champ invalide");
+            selectComparator();
         }
+        System.out.println("------- il faut attenuate pour quelque seconds --------");
+        Comparator<Produit> comparator = switch (trier) {
+            case "1" -> Comparator.comparing(Produit::getLibelle);
+            case "2" -> Comparator.comparingDouble(Produit::getRating);
+            case "3" -> Comparator.comparingInt(Produit::getDiscount_price);
+            default -> Comparator.comparingDouble(Produit::getRating);
+        };
 
-        Comparator<Produit> comparator;
-        switch (trier) {
-            case "1":
-                comparator = Comparator.comparing(Produit::getLibelle);
-                break;
-            case "2":
-                comparator = Comparator.comparingDouble(Produit::getRating);
-                break;
-            case "3":
-                comparator = Comparator.comparingInt(Produit::getDiscount_price);
-                break;
-            default:
-                comparator = Comparator.comparing(Produit::getLibelle);
-                break;
-        }
-
-        if (!order.equals("1")) {
+        if (order.equals("2")) {
             comparator = comparator.reversed();
         }
+
         return comparator;
     }
 
@@ -225,58 +229,95 @@ public class US {
     // =========================
     // US 1.3 - Je veux valider mon panier afin de finaliser ma commande.
     // =========================
-    public void validerPanier(Panier panier) throws SQLException {
-
-        panier.setEndTime(new String(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
-
+    public static void validerPanier(Panier panier) throws SQLException {
+        panier.setEndTime("'" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "'");
         panier.setActive(false);
 
-
-
         String str_panier = "UPDATE panier SET Date_fin = " + panier.getEndTime() + " WHERE Id_panier = " + panier.getId();
-
         Connect.executeUpdate(str_panier);
-
-
         String str_command_table = "INSERT INTO commande (Date_commande) VALUES (" + panier.getEndTime() + " )";
-
-
-        String str_association_table = "INSERT INTO PanierCommande (panier_id, Id_commande) VALUES (" + panier.getId() +
-
-                " , SELECT Id_commande FROM commande WHERE Date_commande = " + panier.getEndTime() + " )";
-
-        Connect.executeUpdate(str_command_table);
-
+        int id_commande = Connect.creationWithAutoIncrement(str_command_table);
+        String str_association_table = "INSERT INTO PanierCommande VALUES (" + panier.getId() +
+                " , "+ id_commande +" );";
         Connect.executeUpdate(str_association_table);
-
     }
 
     // =========================
     // US 1.4 - Je veux annuler mon panier.
     // =========================
-    public void annulerPanier(Panier panier) throws SQLException {
-
-        String query = "DELETE FROM panier WHERE Id_user = " + panier.getUser().getIdUser() +
-
-                " AND Date_debut = '" + panier.getStartTime() + "' )";
-
+    public static void annulerPanier(Panier panier) throws SQLException {
+        String query = "DELETE FROM panier WHERE id_panier = " + panier.getId();
         Connect.executeUpdate(query);
-
         panier.getListProduit().clear();
+        panier.getListProduitAndMagasin().clear();
+    }
 
+    public static void annulerPanier(User user) throws SQLException {
+        String query = "DELETE FROM panier WHERE id_panier = " + user.getPanier().getId();
+        Connect.executeUpdate(query);
+        user.getPanier().getListProduit().clear();
+        user.getPanier().getListProduitAndMagasin().clear();
     }
 
     // =========================
     // US 1.5 - Je veux reprendre un panier en cours afin de finaliser mes achats.
     // =========================
+    public static ArrayList<Panier> historyPanierByUser(User user) throws SQLException {
+        String query = String.format(
+                "SELECT pa.id_panier, pa.id_user, pa.id_produit, pa.qte_produit, pa.Date_debut, pa.Date_fin, " +
+                        " p.name, p.ratings, p.no_of_ratings, p.discount_price, p.actual_price, p.category " +
+                        "FROM panier pa " +
+                        "JOIN produit p ON pa.id_produit = p.id_produit " +
+                        "WHERE pa.id_user = %d " +
+                        "ORDER BY pa.id_panier",
+                user.getIdUser()
+        );
+        Map<Integer, Panier> panierMap = new HashMap<>();
+        try (ResultSet result = Connect.executeQuery(query)) {
+            while (result.next()) {
+                int idPanier = result.getInt("id_panier");
+                Panier panier = panierMap.get(idPanier);
+                if (panier == null) {
+                    String start_time = result.getString("Date_debut");
+                    String end_time = result.getString("Date_fin");
+                    Map<Produit, Integer> produitsInThisPanier = new HashMap<>();
+
+                    panier = new Panier(idPanier, produitsInThisPanier, start_time, end_time, user);
+                    panier.setActive(true);
+
+                    panierMap.put(idPanier, panier);
+                }
+
+                Produit produit = new Produit(
+                        result.getInt("id_produit"),
+                        result.getString("name"),
+                        result.getDouble("ratings"),
+                        result.getInt("no_of_ratings"),
+                        result.getInt("discount_price"),
+                        result.getInt("actual_price"),
+                        result.getInt("category")
+                );
+
+                int qte = result.getInt("qte_produit");
+
+                panier.getListProduit().put(
+                        produit,
+                        panier.getListProduit().getOrDefault(produit, 0) + qte
+                );
+            }
+        }
+        return new ArrayList<>(panierMap.values());
+    }
+
     public static Panier addPaniertoPanier(User user, Panier panier) throws SQLException {
+        user.setPanier(loadPanierByUser(user));
         Map<Produit, Integer> produits = panier.getListProduit();
         produits.entrySet().stream()
                 .forEach(entry -> {
                     user.getPanier().getListProduit().put(entry.getKey(), user.getPanier().getListProduit().getOrDefault(entry.getKey(), 0) + entry.getValue());
                 });
         updatePanierInDB(user.getPanier());
-        return panier;
+        return user.getPanier();
     }
 
     public static Panier loadPanierByUser(User user) throws SQLException {
@@ -579,17 +620,40 @@ public class US {
         System.out.println(" Répartition selon les groupes d'âge :");
         agePercentage.entrySet().stream()
                 .sorted((o1,o2) -> o2.getValue() - o1.getValue())
-                .forEach(entry -> System.out.printf("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
+                .forEach(entry -> System.out.println("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
 
         System.out.println("Répartition hommes/femmes :");
         genderPercentage.entrySet().stream()
                 .sorted((o1,o2) -> o2.getValue() - o1.getValue())
-                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
+                .forEach(entry -> System.out.println(entry.getKey() + " : %" + entry.getValue()));
 
         System.out.println("Répartition selon les signes du zodiaque :");
         zodiaquePercentage.entrySet().stream()
                 .sorted((o1,o2) -> o2.getValue() - o1.getValue())
-                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
+                .forEach(entry -> System.out.println(entry.getKey() + " : %" + entry.getValue()));
+    }
+
+    public static void consulterMagasin(int id_magasin) throws SQLException {
+        HashMap<User,Integer> consulterUserParMagasin = consulterUserParMagasin(id_magasin);
+        HashMap<String,Integer> agePercentage = groupUserParAge(consulterUserParMagasin);
+        HashMap<String,Integer> genderPercentage = groupUserParGender(consulterUserParMagasin);
+        HashMap<String,Integer> zodiaquePercentage = groupUserParZodiaque(consulterUserParMagasin);
+        System.out.println("========================================");
+        System.out.println("Consulter magasin : " + id_magasin);
+        System.out.println(" Répartition selon les groupes d'âge :");
+        agePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.println("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
+
+        System.out.println("Répartition hommes/femmes :");
+        genderPercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.println(entry.getKey() + " : %" + entry.getValue()));
+
+        System.out.println("Répartition selon les signes du zodiaque :");
+        zodiaquePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.println(entry.getKey() + " : %" + entry.getValue()));
     }
 
     // =========================
@@ -701,14 +765,20 @@ public class US {
     }
 
     public static void main(String[] args) throws SQLException, IOException {
-        AVGTempRealiserPanier();
+        User user = UserDB.findUserById(1);
+        ArrayList<Panier> historyPanier = historyPanierByUser(user);
+        historyPanier.forEach(System.out::println);
+        System.out.println("=========================");
+        addPaniertoPanier(user,historyPanier.get(0));
+        System.out.println(user.getPanier());
+        validerPanier(user.getPanier());
     }
 
 
 
 
 
-    }
-    
+}
+
 
 

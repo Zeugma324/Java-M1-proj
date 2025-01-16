@@ -41,5 +41,24 @@ public class UserDB {
 	    return findUserBylogin(email, mdp);
 	}
 
+	public static User findUserById(int id) throws SQLException {
+		String query = "SELECT id_user, lastname, name, tel, adress, email, mot_de_passe, gender, date_de_naissance FROM utilisateur WHERE id_user = " + id;
+		ResultSet rs = Connect.executeQuery(query);
+		if(rs.next()) {
+			User user = new User(
+					id,
+					rs.getString("lastname"),
+					rs.getString("name"),
+					rs.getString("tel"),
+					rs.getString("adress"),
+					rs.getString("email"),
+					rs.getString("mot_de_passe"),
+					rs.getString("gender"),
+					rs.getString("date_de_naissance"));
+			user.setPanier(PanierBD.loadPanierByUser(user)) ;
+			return user;
+		}
+		return null;
+	}
 
 }
