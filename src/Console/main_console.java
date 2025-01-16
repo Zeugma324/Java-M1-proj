@@ -13,71 +13,97 @@ import java.util.Scanner;
 
 public class main_console {
     public static void main(String[] args) throws NoSuchAlgorithmException, SQLException {
+        
         Scanner sc = new Scanner(System.in);
-        User user = null;
-        //Connect.closeConnexion();
+        User user = null;        
+        boolean userConnected = false; 
+        
+        // === PARTIE CONNEXION/INSCRIPTION ===
+        while (!userConnected) {
+            System.out.println("=====================================");
+            System.out.println("  (sc) Se connecter");
+            System.out.println("  (nu) Nouvel utilisateur");
+            System.out.print("Votre choix : ");
+            String choixConnexion = sc.nextLine().trim();
 
+            switch (choixConnexion) {
+                case "sc":
+                    System.out.print("Email : ");
+                    String email = sc.nextLine();
+                    System.out.print("Mot de passe : ");
+                    String mdp = sc.nextLine();
+                    
+                   
+                    user = UserDB.findUserBylogin(email, mdp);
+                    
+                    if (user == null) {
+                        System.out.println("Adresse mail ou mot de passe erroné, veuillez réessayer.\n");
+                    } else {
+                        System.out.println("\nConnexion réussie ! Bienvenue " + user.getName() + " !");
+                        userConnected = true;
+                    }
+                    break;
+
+                case "nu":
+                    System.out.print("Email : ");
+                    String emailNu = sc.nextLine();
+                    System.out.print("Mot de passe : ");
+                    String mdpNu = sc.nextLine();
+                    System.out.print("Prénom : ");
+                    String prenomNu = sc.nextLine();
+                    System.out.print("Nom : ");
+                    String nomNu = sc.nextLine();
+                    System.out.print("Numéro de téléphone : ");
+                    String telNu = sc.nextLine();
+                    System.out.print("Adresse : ");
+                    String addressNu = sc.nextLine();
+                    System.out.print("Genre (M/F/Autre) : ");
+                    String genderNu = sc.nextLine();
+                    System.out.print("Date de naissance (yyyy-MM-dd) : ");
+                    String birthdayNu = sc.nextLine();
+                    
+                    user = UserDB.createUser(nomNu, prenomNu, emailNu, mdpNu, telNu, addressNu, genderNu, birthdayNu);
+                    
+                    System.out.println("\nInscription réussie ! Bienvenue " + user.getName() + " !");
+                    userConnected = true;
+                    break;
+
+                default:
+                    System.out.println("Choix invalide, veuillez réessayer.\n");
+            }
+        }
+
+        // Menu
         try {
-        	System.out.println("Se connecter / nouvel utilisateur (sc/nu)");
-            System.out.println("===== MENU =====");
-            System.out.println("1. Visualiser un produit");
-            System.out.println("2. Rechercher un produit par mot-clé");
-            System.out.println("3. Consulter les produits par catégorie");
-
-            System.out.println("4. Gérer mon panier");
-
-            System.out.println("5. Définir les utilisateurs VIP");
-            System.out.println("6. Temps moyen de réalisation d'un panier");
-            System.out.println("7. Temps moyen de préparation des commandes");
-            System.out.println("8. Afficher le prix moyen par catégorie");
-            System.out.println("9. Comparer les notes d’une catégorie à l’autre");
-            System.out.println("10. Produits fréquents");
-            System.out.println("11. Habitudes de consommation");
-            System.out.println("12. Recommandations");
-            System.out.println("0. Quitter");
-
-            while (true) {
+            boolean continuerMenu = true;
+            
+            while (continuerMenu) {
+                System.out.println("===== MENU PRINCIPAL =====");
+                System.out.println("Partie Produit");
+                System.out.println("1. Visualiser un produit");
+                System.out.println("2. Rechercher un produit par mot-clé");
+                System.out.println("3. Consulter les produits par catégorie");
+                System.out.println("=======================================");
+                System.out.println("Partie Panier");
+                System.out.println("4. Gérer mon panier"); 
+                System.out.println("=======================================");
+                System.out.println("Partie Gestion");
+                System.out.println("5. Définir les utilisateurs VIP");
+                System.out.println("6. Temps moyen de réalisation d'un panier");
+                System.out.println("7. Temps moyen de préparation des commandes");
+                System.out.println("8. Afficher le prix moyen par catégorie");
+                System.out.println("9. Comparer les notes d’une catégorie à l’autre");
+                System.out.println("=======================================");
+                System.out.println("Partie Client");
+                System.out.println("10. Produits fréquents");
+                System.out.println("11. Habitudes de consommation");
+                System.out.println("12. Recommandations");
+                System.out.println("0. Quitter");
                 System.out.print("Votre choix : ");
-                String choix = sc.nextLine();
                 
-                switch (choix) {
-                	case "sc":
-                		System.out.println("email : ");
-                		String email = sc.nextLine();
-                		System.out.println("mot de passe :");
-                		String mdp = sc.nextLine();
-                		user = UserDB.findUserBylogin(email, mdp);
-                		if(user == null) {
-                			System.out.println("Adresse mail ou mot de passe éroné");
-                			System.exit(0);
-                		}
-                		break;
-                		
-                	case "nu":
-                		System.out.println("Email : ");
-                	    String emailNu = sc.nextLine();
-                	    System.out.println("Mot de passe :");
-                	    String mdpNu = sc.nextLine();
-                	    System.out.println("Prénom : ");
-                	    String prenomNu = sc.nextLine();
-                	    System.out.println("Nom : ");
-                	    String nomNu = sc.nextLine();
-                	    System.out.println("Numéro de téléphone : ");
-                	    String telNu = sc.nextLine();
-                	    System.out.println("Adresse : ");
-                	    String addressNu = sc.nextLine();
-                	    System.out.println("Genre (M/F/Autre) : ");
-                	    String genderNu = sc.nextLine();
-                	    System.out.println("Date de naissance (yyyy-MM-dd) : ");
-                	    String birthdayNu = sc.nextLine();
-                	    user = UserDB.createUser(nomNu, prenomNu, emailNu, mdpNu, telNu, addressNu, genderNu, birthdayNu);
-                	    break;
-                		
-                    case "0":
-                        System.out.println("A bientôt !");
-                        System.exit(0);
-                        break;
+                String choix = sc.nextLine();
 
+                switch (choix) {
                     case "1":
                         System.out.print("Entrez l'ID du produit : ");
                         int idProd = Integer.parseInt(sc.nextLine());
@@ -95,7 +121,6 @@ public class main_console {
                         int idCat = Integer.parseInt(sc.nextLine());
                         US.consulterProduitsParCategorie(idCat);
                         break;
-
 
                     case "4":
                         gererPanier(sc, user);
@@ -133,29 +158,34 @@ public class main_console {
                         US.faireRecommandation(user);
                         break;
 
+                    case "0":
+                        System.out.println("A bientôt !");
+                        continuerMenu = false;
+                        break;
+
                     default:
                         System.out.println("Choix invalide !");
                         break;
                 }
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
             sc.close();
+            Connect.closeConnexion(); 
         }
     }
 
-    // SOUS MENU
+    // SOUS MENU Panier
     private static void gererPanier(Scanner sc, User user) throws SQLException {
-
-
         Panier panier = US.loadPanierByUser(user);
         System.out.println("Panier chargé (ID = " + panier.getId() + ") pour l'utilisateur " + user.getName());
 
         boolean continuer = true;
         while (continuer) {
-            System.out.println("===== GESTION DU PANIER =====");
-            System.out.println("1. Visualiser Panier");
+            System.out.println("\n===== GESTION DU PANIER =====");
+            System.out.println("1. Visualiser le panier");
             System.out.println("2. Ajouter un produit");
             System.out.println("3. Supprimer un produit");
             System.out.println("4. Valider le panier");
@@ -171,14 +201,14 @@ public class main_console {
                     continuer = false;
                     break;
 
-                case "1" :
+                case "1":
                     System.out.println("Panier chargé (ID = " + panier.getId() + ")");
                     panier.afficher();
                     break;
+
                 case "2":
                     System.out.print("Entrez l'ID du produit à ajouter : ");
                     int idProd = Integer.parseInt(sc.nextLine());
-
                     System.out.print("Entrez la quantité : ");
                     int qty = Integer.parseInt(sc.nextLine());
 
@@ -217,11 +247,13 @@ public class main_console {
                     System.out.println("Panier annulé/vidé !");
                     continuer = false;
                     break;
-                case "6" :
+
+                case "6":
+                    
                     US us2 = new US();
-                    us2.modifiereProduitPanier(user.getPanier(),ProduitBD.loadProduit(1),4);
-
-
+                    us2.modifiereProduitPanier(user.getPanier(), ProduitBD.loadProduit(1), 4);
+                    // ...
+                    break;
 
                 default:
                     System.out.println("Choix invalide (sous-menu) !");
