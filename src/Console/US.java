@@ -341,10 +341,6 @@ public class US {
 
     }
 
-
-
-
-
     public void getReplacment(Panier panier,Produit prd) throws SQLException {
 
         removeProduitFromPanier(panier,prd);
@@ -429,6 +425,172 @@ public class US {
 
     }
 
+    // =========================
+    // US 2
+    // =========================
+
+    // US2.1. Je veux consulter la liste des produits que je commande le plus fréquemment.
+    public static void AfficherProduitFrequents(User user, int limit) throws SQLException {
+        HashMap<Produit, Integer> produits = historyPanier(user);
+        produits.entrySet().stream()
+                .sorted((o1, o2) -> o2.getValue().compareTo(o1.getValue()))
+                .limit(limit)
+                .forEach(o -> System.out.println("Achat fois :" + o.getValue() + " ; Produit :" + o.getKey().getLibelle()));
+    }
+
+    //2.2 Je veux consulter mes habitudes de consommation (bio, nutriscore, catégorie de produits, marques).
+    public static void affichierHabitudes(User user) throws SQLException {
+        System.out.println("==== habitudes des consommations : =====");
+        HashMap<Produit, Integer> produits = historyPanier(user);
+        ArrayList<String> category_habits = calculateCategoryHabitude(produits);
+        String discount_habit = calculateDiscountHabitude(produits);
+        String popularity_habit = calculatePopularityHabitude(produits);
+
+        System.out.println("======== Catégories préférées : ========");
+        category_habits.forEach(System.out::println);
+
+        System.out.println("========================================");
+        System.out.println("Discount préféré :" + discount_habit);
+        System.out.println("========================================");
+        System.out.println("Popularité préférée :" + popularity_habit);
+        System.out.println("========================================");
+    }
+
+    //US 2.3
+    public static ArrayList<Produit> faireRecommandation(User user) throws SQLException {
+        Scanner scanner = new Scanner(System.in);
+        boolean[] preference = validerHabitudes(user);
+        HashMap<Produit, Integer> produits_history = historyPanier(user);
+        ArrayList<String> excluded_subCategories = new ArrayList<>();
+
+        produits_history.keySet().stream()
+                .forEach(produit -> excluded_subCategories.add(produit.getSub_category()));
+        excluded_subCategories.stream().distinct().collect(Collectors.toList());
+
+        ArrayList<String> category = calculateCategoryHabitude(produits_history);
+        String discount = calculateDiscountHabitude(produits_history);
+        String popularity = calculatePopularityHabitude(produits_history);
+
+        ArrayList<Produit> toutLesProduitsPossible = listDeProduitsDansCategory(produits_history, user);
+        Map<Produit, Integer> scoreMap = toutLesProduitsPossible.stream()
+                .collect(Collectors.toMap(prod -> prod, prod -> {
+                    try {
+                        return compairingScore(prod, preference, category, discount, popularity);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                        return 0;
+                    }
+                }));
+        scoreMap.entrySet().stream().forEach(e -> {
+            System.out.println(e.getKey().getId() + " : " + e.getValue());
+        });
+        toutLesProduitsPossible.stream()
+                .sorted((p1, p2) -> scoreMap.get(p2) - scoreMap.get(p1))
+                .filter(prod -> !excluded_subCategories.contains(prod.getSub_category()))
+                .limit(15)
+                .forEach(System.out::println);
+
+        return toutLesProduitsPossible;
+    }
+
+    // =========================
+    // US 3
+    // =========================
+    //US 3.1. Je veux importer automatiquement des produits afin de mettre à jour mon catalogue produit.
+    //Le csv est dans le dossier data.
+    public static void importerProduit(String name_csv) throws SQLException, IOException {
+        String csvFile = "src/data/" + name_csv + ".csv";
+        char separator = ',';
+        StringBuilder query = new StringBuilder();
+        query.append("INSERT INTO produit(name, ratings, no_of_ratings, discount_price, actual_price, category) VALUES ");
+        ArrayList<String[]> produitList = new ArrayList<>();
+
+        for (String line : Files.readAllLines(Paths.get(csvFile))) {
+            String[] data = line.split(String.valueOf(separator));
+            produitList.add(data);
+        }
+
+        produitList.forEach(produit -> {
+            try {
+                String libelle = produit[0];
+                String main_category = produit[1];
+                String sub_category = produit[2];
+                double rating = Double.parseDouble(produit[3]);
+                int no_of_ratings = Integer.parseInt(produit[4]);
+                int discount_price = Integer.parseInt(produit[5]);
+                int actual_price = Integer.parseInt(produit[6]);
+
+                // check if category already exist
+                int category;
+                if (catAndId_cat.containsKey(sub_category)) {
+                    category = catAndId_cat.get(sub_category);
+                } else {
+                    // new category insert into table category
+                    category = catAndId_cat.size() + 1;
+                    catAndId_cat.put(sub_category, category);
+
+                    String insertCategoryQuery = String.format(
+                            "INSERT INTO categories (Id_cat, main_category, sub_category) VALUES (%d, '%s', '%s')",
+                            category, main_category, sub_category);
+                    Connect.executeUpdate(insertCategoryQuery);
+                }
+
+                // ecrit un quand query donc on peux faire tout les insert dan 1 grand query.
+                query.append(String.format("('%s', %.2f, %d, %d, %d, %d), ",
+                        libelle, rating, no_of_ratings, discount_price, actual_price, category));
+            } catch (Exception e) {
+                System.err.println("错误解析行: " + String.join(",", produit));
+                e.printStackTrace();
+            }
+        });
+
+        query.delete(query.length() - 2, query.length());
+        query.append(';');
+        Connect.executeUpdate(query.toString());
+        Connect.closeConnexion();
+    }
+
+    // =========================
+    // US 3.2 - Temps moyen de réalisation d'un panier
+    // =========================
+    public static void AVGTempRealiserPanier() throws SQLException {
+        String sql = "SELECT AVG(TIMESTAMPDIFF(DAY, Date_debut, Date_fin)) AS TempMoyenP " +
+                "FROM panier WHERE Date_fin IS NOT NULL";
+
+        ResultSet result = Connect.executeQuery(sql);
+        if (result.next()) {
+            double AVGTempDays = result.getDouble("TempMoyenP");
+            System.out.println("Temps moyen de réalisation d'un panier : "
+                    + AVGTempDays + " jours");
+        } else {
+            System.out.println("Aucun panier finalisé trouvé.");
+        }
+        Connect.closeConnexion();
+    }
+
+    //US 3.5
+    public static void consulterProduit(Produit produit) throws SQLException {
+        HashMap<User,Integer> consulterUserParProduit = consulterUserParProduit(produit);
+        HashMap<String,Integer> agePercentage = groupUserParAge(consulterUserParProduit);
+        HashMap<String,Integer> genderPercentage = groupUserParGender(consulterUserParProduit);
+        HashMap<String,Integer> zodiaquePercentage = groupUserParZodiaque(consulterUserParProduit);
+        System.out.println("========================================");
+        System.out.println("Consulter produit : " + produit.getLibelle());
+        System.out.println(" Répartition selon les groupes d'âge :");
+        agePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.printf("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
+
+        System.out.println("Répartition hommes/femmes :");
+        genderPercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
+
+        System.out.println("Répartition selon les signes du zodiaque :");
+        zodiaquePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
+    }
 
     // =========================
     // US 7 - Définir les users VIP
@@ -448,26 +610,10 @@ public class US {
         Connect.closeConnexion();
     }
 
-    // =========================
-    // US 8 - Temps moyen de réalisation d'un panier
-    // =========================
-    public static void AVGTempRealiserPanier() throws SQLException {
-        String sql = "SELECT AVG(TIMESTAMPDIFF(DAY, Date_debut, Date_fin)) AS TempMoyenP " +
-                "FROM panier WHERE Date_fin IS NOT NULL";
 
-        ResultSet result = Connect.executeQuery(sql);
-        if (result.next()) {
-            double AVGTempDays = result.getDouble("TempMoyenP");
-            System.out.println("Temps moyen de réalisation d'un panier : "
-                    + AVGTempDays + " jours");
-        } else {
-            System.out.println("Aucun panier finalisé trouvé.");
-        }
-        Connect.closeConnexion();
-    }
 
     // =========================
-    // US 9 - Temps moyen de préparation des commandes
+    // US 9 - Temps moyen de réparation des commandes
     // =========================
     public static void AVGTempPrepareCom() throws SQLException {
         String sql = "SELECT AVG(TIMESTAMPDIFF(DAY, L.date_livrasion, P.Date_fin)) AS TempMoyenC " +
@@ -554,150 +700,15 @@ public class US {
         Connect.closeConnexion();
     }
 
-    // US2.1. Je veux consulter la liste des produits que je commande le plus fréquemment.
-    public static void AfficherProduitFrequents(User user, int limit) throws SQLException {
-        HashMap<Produit, Integer> produits = historyPanier(user);
-        produits.entrySet().stream()
-                .sorted((o1, o2) -> o2.getValue().compareTo(o1.getValue()))
-                .limit(limit)
-                .forEach(o -> System.out.println("Achat fois :" + o.getValue() + " ; Produit :" + o.getKey().getLibelle()));
-    }
-
-    //2.2 Je veux consulter mes habitudes de consommation (bio, nutriscore, catégorie de produits, marques).
-    public static void affichierHabitudes(User user) throws SQLException {
-        System.out.println("==== habitudes des consommations : =====");
-        HashMap<Produit, Integer> produits = historyPanier(user);
-        ArrayList<String> category_habits = calculateCategoryHabitude(produits);
-        String discount_habit = calculateDiscountHabitude(produits);
-        String popularity_habit = calculatePopularityHabitude(produits);
-
-        System.out.println("======== Catégories préférées : ========");
-        category_habits.forEach(System.out::println);
-
-        System.out.println("========================================");
-        System.out.println("Discount préféré :" + discount_habit);
-        System.out.println("========================================");
-        System.out.println("Popularité préférée :" + popularity_habit);
-        System.out.println("========================================");
-    }
-
-    //US 2.3
-    public static ArrayList<Produit> faireRecommandation(User user) throws SQLException {
-        Scanner scanner = new Scanner(System.in);
-        boolean[] preference = validerHabitudes(user);
-        HashMap<Produit, Integer> produits_history = historyPanier(user);
-        ArrayList<String> excluded_subCategories = new ArrayList<>();
-
-        produits_history.keySet().stream()
-                .forEach(produit -> excluded_subCategories.add(produit.getSub_category()));
-        excluded_subCategories.stream().distinct().collect(Collectors.toList());
-
-        ArrayList<String> category = calculateCategoryHabitude(produits_history);
-        String discount = calculateDiscountHabitude(produits_history);
-        String popularity = calculatePopularityHabitude(produits_history);
-
-        ArrayList<Produit> toutLesProduitsPossible = listDeProduitsDansCategory(produits_history, user);
-        Map<Produit, Integer> scoreMap = toutLesProduitsPossible.stream()
-                .collect(Collectors.toMap(prod -> prod, prod -> {
-                    try {
-                        return compairingScore(prod, preference, category, discount, popularity);
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                        return 0;
-                    }
-                }));
-        scoreMap.entrySet().stream().forEach(e -> {
-            System.out.println(e.getKey().getId() + " : " + e.getValue());
-        });
-        toutLesProduitsPossible.stream()
-                .sorted((p1, p2) -> scoreMap.get(p2) - scoreMap.get(p1))
-                .filter(prod -> !excluded_subCategories.contains(prod.getSub_category()))
-                .limit(15)
-                .forEach(System.out::println);
-
-        return toutLesProduitsPossible;
-    }
-
-    //US 3.1. Je veux importer automatiquement des produits afin de mettre à jour mon catalogue produit.
-    //Le csv est dans le dossier data.
-    public static void importerProduit(String name_csv) throws SQLException, IOException {
-        String csvFile = "src/data/" + name_csv + ".csv";
-        char separator = ',';
-        StringBuilder query = new StringBuilder();
-        query.append("INSERT INTO produit(name, ratings, no_of_ratings, discount_price, actual_price, category) VALUES ");
-        ArrayList<String[]> produitList = new ArrayList<>();
-
-        for (String line : Files.readAllLines(Paths.get(csvFile))) {
-            String[] data = line.split(String.valueOf(separator));
-            produitList.add(data);
-        }
-
-        produitList.forEach(produit -> {
-            try {
-                String libelle = produit[0];
-                String main_category = produit[1];
-                String sub_category = produit[2];
-                double rating = Double.parseDouble(produit[3]);
-                int no_of_ratings = Integer.parseInt(produit[4]);
-                int discount_price = Integer.parseInt(produit[5]);
-                int actual_price = Integer.parseInt(produit[6]);
-
-                // check if category already exist
-                int category;
-                if (catAndId_cat.containsKey(sub_category)) {
-                    category = catAndId_cat.get(sub_category);
-                } else {
-                    // new category insert into table category
-                    category = catAndId_cat.size() + 1;
-                    catAndId_cat.put(sub_category, category);
-
-                    String insertCategoryQuery = String.format(
-                            "INSERT INTO categories (Id_cat, main_category, sub_category) VALUES (%d, '%s', '%s')",
-                            category, main_category, sub_category);
-                    Connect.executeUpdate(insertCategoryQuery);
-                }
-
-                // ecrit un quand query donc on peux faire tout les insert dan 1 grand query.
-                query.append(String.format("('%s', %.2f, %d, %d, %d, %d), ",
-                        libelle, rating, no_of_ratings, discount_price, actual_price, category));
-            } catch (Exception e) {
-                System.err.println("错误解析行: " + String.join(",", produit));
-                e.printStackTrace();
-            }
-        });
-
-        query.delete(query.length() - 2, query.length());
-        query.append(';');
-        Connect.executeUpdate(query.toString());
-        Connect.closeConnexion();
-    }
-
-    //US 3.5
-    public static void consulterProduit(Produit produit) throws SQLException {
-        HashMap<User,Integer> consulterUserParProduit = consulterUserParProduit(produit);
-        HashMap<String,Integer> agePercentage = groupUserParAge(consulterUserParProduit);
-        HashMap<String,Integer> genderPercentage = groupUserParGender(consulterUserParProduit);
-        HashMap<String,Integer> zodiaquePercentage = groupUserParZodiaque(consulterUserParProduit);
-        System.out.println("========================================");
-        System.out.println("Consulter produit : " + produit.getLibelle());
-        System.out.println(" Répartition selon les groupes d'âge :");
-        agePercentage.entrySet().stream()
-                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
-                .forEach(entry -> System.out.printf("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
-
-        System.out.println("Répartition hommes/femmes :");
-        genderPercentage.entrySet().stream()
-                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
-                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
-
-        System.out.println("Répartition selon les signes du zodiaque :");
-        zodiaquePercentage.entrySet().stream()
-                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
-                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
+    public static void main(String[] args) throws SQLException, IOException {
+        AVGTempRealiserPanier();
     }
 
 
-}
+
+
+
+    }
     
 
 
