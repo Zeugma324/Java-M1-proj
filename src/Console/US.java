@@ -579,17 +579,40 @@ public class US {
         System.out.println(" Répartition selon les groupes d'âge :");
         agePercentage.entrySet().stream()
                 .sorted((o1,o2) -> o2.getValue() - o1.getValue())
-                .forEach(entry -> System.out.printf("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
+                .forEach(entry -> System.out.println("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
 
         System.out.println("Répartition hommes/femmes :");
         genderPercentage.entrySet().stream()
                 .sorted((o1,o2) -> o2.getValue() - o1.getValue())
-                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
+                .forEach(entry -> System.out.println(entry.getKey() + " : %" + entry.getValue()));
 
         System.out.println("Répartition selon les signes du zodiaque :");
         zodiaquePercentage.entrySet().stream()
                 .sorted((o1,o2) -> o2.getValue() - o1.getValue())
-                .forEach(entry -> System.out.printf(entry.getKey() + " : %" + entry.getValue()));
+                .forEach(entry -> System.out.println(entry.getKey() + " : %" + entry.getValue()));
+    }
+
+    public static void consulterMagasin(int id_magasin) throws SQLException {
+        HashMap<User,Integer> consulterUserParMagasin = consulterUserParMagasin(id_magasin);
+        HashMap<String,Integer> agePercentage = groupUserParAge(consulterUserParMagasin);
+        HashMap<String,Integer> genderPercentage = groupUserParGender(consulterUserParMagasin);
+        HashMap<String,Integer> zodiaquePercentage = groupUserParZodiaque(consulterUserParMagasin);
+        System.out.println("========================================");
+        System.out.println("Consulter magasin : " + id_magasin);
+        System.out.println(" Répartition selon les groupes d'âge :");
+        agePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.println("Âge "+ entry.getKey() + " : %" + entry.getValue()) );
+
+        System.out.println("Répartition hommes/femmes :");
+        genderPercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.println(entry.getKey() + " : %" + entry.getValue()));
+
+        System.out.println("Répartition selon les signes du zodiaque :");
+        zodiaquePercentage.entrySet().stream()
+                .sorted((o1,o2) -> o2.getValue() - o1.getValue())
+                .forEach(entry -> System.out.println(entry.getKey() + " : %" + entry.getValue()));
     }
 
     // =========================
@@ -701,7 +724,8 @@ public class US {
     }
 
     public static void main(String[] args) throws SQLException, IOException {
-        AVGTempRealiserPanier();
+//        AVGTempRealiserPanier();
+        consulterMagasin(1);
     }
 
 
