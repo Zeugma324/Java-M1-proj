@@ -7,7 +7,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.logging.Formatter;
+import java.util.stream.Collectors;
 
 import static BD_Connect.ProduitBD.catAndId_cat;
 
@@ -199,8 +204,42 @@ public class MagasinManager {
         }
         Connect.closeConnexion();
     }
+
+    public static ArrayList<Integer> commandAPreparer(int id_magasin) throws SQLException{
+        String query = String.format(
+                """
+                    SELECT pc.id_commande, p.Date_fin
+                    FROM panier p
+                    JOIN PanierCommande pc ON p.id_panier = pc.panier_id
+                    LEFT JOIN livrasion l on l.id_commande = pc.id_commande
+                    WHERE p.id_magasin = %d
+                    AND NOT EXISTS(
+                        SELECT 1
+                        FROM livrasion l2
+                        WHERE l2.id_commande = pc.id_commande
+                    )""",id_magasin);
+        ResultSet result = Connect.executeQuery(query);
+        HashMap<Integer, LocalDateTime> map = new HashMap<>();
+        while(result.next()){
+            int id_commande = result.getInt("id_commande");
+            String date_fin = result.getString("Date_fin");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime date = LocalDateTime.parse(date_fin,formatter);
+            map.put(id_commande, date);
+        }
+        ArrayList<Integer> list = new ArrayList<>();
+        map.entrySet().stream()
+                .sorted((o1,o2) -> o1.getValue().compareTo(o2.getValue()))
+                .forEach(entry -> list.add(entry.getKey()));
+        return list;
+    }
+
+    public static void finaliserCommand(int id_)
+
     public static void main(String[] args) throws SQLException, IOException {
-        AVGTempPrepareCom(1);
+//        AVGTempPrepareCom(1);
+//        System.out.println(commandAPreparer(1));
+
     }
 
     }
