@@ -101,7 +101,8 @@ public class US {
         }
         liste.stream()
                 .sorted(selectComparator())
-                .limit(10);
+                .limit(10)
+                .forEach(System.out::println);
         return liste;
     }
 
@@ -122,6 +123,7 @@ public class US {
                     result.getInt("category")
             ));
         }
+
         return produits;
     }
 
@@ -522,9 +524,7 @@ public class US {
                         return 0;
                     }
                 }));
-        scoreMap.entrySet().stream().forEach(e -> {
-            System.out.println(e.getKey().getId() + " : " + e.getValue());
-        });
+
         toutLesProduitsPossible.stream()
                 .sorted((p1, p2) -> scoreMap.get(p2) - scoreMap.get(p1))
                 .filter(prod -> !excluded_subCategories.contains(prod.getSub_category()))
