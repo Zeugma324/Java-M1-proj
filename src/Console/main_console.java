@@ -5,15 +5,20 @@ import BD_Connect.UserDB;
 import Objects.Panier;
 import Objects.Produit;
 import Objects.User;
+import connexion.Connect;
 
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Scanner;
 
 public class main_console {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchAlgorithmException, SQLException {
         Scanner sc = new Scanner(System.in);
+        User user = null;
+        //Connect.closeConnexion();
 
         try {
+        	System.out.println("Se connecter / nouvel utilisateur (sc/nu)");
             System.out.println("===== MENU =====");
             System.out.println("1. Visualiser un produit");
             System.out.println("2. Rechercher un produit par mot-clé");
@@ -34,8 +39,40 @@ public class main_console {
             while (true) {
                 System.out.print("Votre choix : ");
                 String choix = sc.nextLine();
-
+                
                 switch (choix) {
+                	case "sc":
+                		System.out.println("email : ");
+                		String email = sc.nextLine();
+                		System.out.println("mot de passe :");
+                		String mdp = sc.nextLine();
+                		user = UserDB.findUserBylogin(email, mdp);
+                		if(user == null) {
+                			System.out.println("Adresse mail ou mot de passe éroné");
+                			System.exit(0);
+                		}
+                		break;
+                		
+                	case "nu":
+                		System.out.println("Email : ");
+                	    String emailNu = sc.nextLine();
+                	    System.out.println("Mot de passe :");
+                	    String mdpNu = sc.nextLine();
+                	    System.out.println("Prénom : ");
+                	    String prenomNu = sc.nextLine();
+                	    System.out.println("Nom : ");
+                	    String nomNu = sc.nextLine();
+                	    System.out.println("Numéro de téléphone : ");
+                	    String telNu = sc.nextLine();
+                	    System.out.println("Adresse : ");
+                	    String addressNu = sc.nextLine();
+                	    System.out.println("Genre (M/F/Autre) : ");
+                	    String genderNu = sc.nextLine();
+                	    System.out.println("Date de naissance (yyyy-MM-dd) : ");
+                	    String birthdayNu = sc.nextLine();
+                	    user = UserDB.createUser(nomNu, prenomNu, emailNu, mdpNu, telNu, addressNu, genderNu, birthdayNu);
+                	    break;
+                		
                     case "0":
                         System.out.println("A bientôt !");
                         System.exit(0);
@@ -61,7 +98,7 @@ public class main_console {
 
 
                     case "4":
-                        gererPanier(sc);
+                        gererPanier(sc, user);
                         break;
 
                     case "5":
@@ -85,15 +122,15 @@ public class main_console {
                         break;
 
                     case "10":
-                        US.AfficherProduitFrequents(UserDB.findUserById(1), 10);
+                        US.AfficherProduitFrequents(user, 10);
                         break;
 
                     case "11":
-                        US.affichierHabitudes(UserDB.findUserById(1));
+                        US.affichierHabitudes(user);
                         break;
 
                     case "12":
-                        US.faireRecommandation(UserDB.findUserById(4));
+                        US.faireRecommandation(user);
                         break;
 
                     default:
@@ -109,9 +146,7 @@ public class main_console {
     }
 
     // SOUS MENU
-    private static void gererPanier(Scanner sc) throws SQLException {
-
-        User user = UserDB.findUserById(1);
+    private static void gererPanier(Scanner sc, User user) throws SQLException {
 
 
         Panier panier = US.loadPanierByUser(user);

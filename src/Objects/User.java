@@ -3,7 +3,6 @@ package Objects;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
-import static BD_Connect.UserDB.hash;
 
 public class User {
 	private int idUser;
@@ -40,7 +39,7 @@ public class User {
 		this.address = address;
 		this.panier = panier;
 		this.email = email;
-		this.mdp = hash(mdp);
+		this.mdp = mdp;
 		this.gender = gender;
 		this.birthday = birthday;
 
@@ -65,7 +64,7 @@ public class User {
 		this.tel = tel;
 		this.address = address;
 		this.email = email;
-		this.mdp = hash(mdp);
+		this.mdp = mdp;
 		this.gender = gender;
 		this.birthday = birthday;
 

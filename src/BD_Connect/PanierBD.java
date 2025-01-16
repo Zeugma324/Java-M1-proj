@@ -35,6 +35,7 @@ public class PanierBD {
                 return panier;
             }
         }
+        Connect.closeConnexion();
         return new Panier(calculateID(),user);
     }
 
@@ -46,6 +47,7 @@ public class PanierBD {
         if(res.next()) {
             return res.getInt("MAX(Id_panier)") + 1;
         }
+        Connect.closeConnexion();
         return 1;
     }
 
@@ -71,6 +73,7 @@ public class PanierBD {
                     "VALUES (" + panier.getId() + ", " + prod.getId() + ", " + quantity + ", '" + panier.getStartTime() + "', NULL, " + panier.getUser().getIdUser() + ")";
             Connect.executeUpdate(query);
         }
+        Connect.closeConnexion();
     }
 
 
@@ -79,6 +82,7 @@ public class PanierBD {
         panier.getListProduit().remove(prd);
         String query = "DELETE FROM Panier WHERE Id_produit = " + prd.getId() + " AND Id_panier = " + panier.getId() + " AND Id_user = " + panier.getUser().getIdUser() + " AND Date_debut = '" + panier.getStartTime() + "' )";
         Connect.executeUpdate(query);
+        Connect.closeConnexion();
     }
 
     public void modifiereProduitPanier(Panier panier, Produit prd, int quantity) throws SQLException {
@@ -94,6 +98,7 @@ public class PanierBD {
                 " AND Date_debut = '" + panier.getStartTime() + "' )";
         Connect.executeUpdate(query);
         panier.getListProduit().clear();
+        Connect.closeConnexion();
     }
 
     //waiting to be connected with commandJava
@@ -108,6 +113,7 @@ public class PanierBD {
                 " , SELECT Id_commande FROM commande WHERE Date_commande = " + panier.getEndTime() + " )";
         Connect.executeUpdate(str_command_table);
         Connect.executeUpdate(str_association_table);
+        Connect.closeConnexion();
     }
 
     public static void importerProduit(String name_csv) throws SQLException, IOException {
@@ -172,12 +178,12 @@ public class PanierBD {
         Connect.closeConnexion();
     }
 
-    public static void main(String[] args) throws SQLException {
+    /*public static void main(String[] args) throws SQLException {
         User user = UserDB.findUserById(1);
         Produit produit = ProduitBD.loadProduit(1);
         addProduitToPanier(user.getPanier(),produit,4);
         user.getPanier();
-    }
+    }*/
 
 
     public static Panier addPaniertoPanier(User user, Panier panier) throws SQLException {
@@ -205,6 +211,7 @@ public class PanierBD {
                 });
         query.deleteCharAt(query.length() - 1);
         Connect.executeUpdate(query.toString());
+        Connect.closeConnexion();
     }
 
         //afficher une liste de Panier que le user choisir
@@ -253,6 +260,7 @@ public class PanierBD {
                 );
             }
         }
+        Connect.closeConnexion();
         return new ArrayList<>(panierMap.values());
     }
 
