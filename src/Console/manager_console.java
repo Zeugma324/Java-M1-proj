@@ -15,19 +15,19 @@ public class manager_console {
         int id_magasin = sc.nextInt();
         sc.nextLine();
         System.out.println("======================================");
-        System.out.println("Vous être Magasin " + id_magasin);
+        System.out.println("Vous êtes le magasin " + id_magasin);
         System.out.println("======================================");
         boolean continuerMenu = true;
         while (continuerMenu) {
 
-            System.out.println("======= VOUS VOULEX FAIRE ? =======");
+            System.out.println("=======  Différentes Options  =======");
             System.out.println("1. importer des produits");
-            System.out.println("2. Voir temp moyen de réalisation de panier");
-            System.out.println("3. Voir temp moyen de préparation des commandes ");
-            System.out.println("4. éditer des statistiques de produits");
-            System.out.println("5. consulter les profils de consumers");
-            System.out.println("6. consulter la liste des commandes à preparer");
-            System.out.println("7. finaliser le préparation des produits");
+            System.out.println("2. Voir le temps moyen de réalisation des paniers");
+            System.out.println("3. Voir le temps moyen de préparation des commandes ");
+            System.out.println("4. Editer des statistiques sur des produits");
+            System.out.println("5. Consulter les profils de consommateurs");
+            System.out.println("6. Consulter la liste des commandes à preparer");
+            System.out.println("7. Finaliser la préparation des produits");
             System.out.println("0. Quitter");
             String choix = sc.nextLine();
             switch (choix) {
@@ -68,13 +68,13 @@ public class manager_console {
                     break;
                 case "6":
                     ArrayList<Integer> commande = commandAPreparer(id_magasin);
-                    System.out.println("Je vous recommandé de préparer dans cet ordre ");
+                    System.out.println("Je vous recommande de préparer la commande dans cet ordre ");
                     commande.forEach(System.out::println);
                     break;
                 case "7":
-                    System.out.println("Pour quelle commande êtes-vous prêt ? (Entrez le id de commande) ");
+                    System.out.println("Pour quelle commande êtes-vous prêt ? (Entrez l'id de commande) ");
                     int id_commande = Integer.parseInt(sc.nextLine());
-                    System.out.println("Quelle est le moyen de commande? ");
+                    System.out.println("Quelle est le moyen de commande ? (magasin / domicile / mixte)");
                     String moyen_commande = sc.nextLine();
                     finaliserCommand(id_magasin, id_commande, moyen_commande);
                     break;
